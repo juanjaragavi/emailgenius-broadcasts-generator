@@ -1,15 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { VertexAI } from "@google-cloud/vertexai";
 
-// Initialize Vertex AI with Application Default Credentials (ADC)
-// This will automatically find credentials via:
-// 1. GOOGLE_APPLICATION_CREDENTIALS environment variable
-// 2. gcloud auth application-default login
-// 3. Attached service account (if running on GCP)
-const vertex = new VertexAI({
-  project: process.env.GOOGLE_CLOUD_PROJECT || "",
-  location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
-});
+// Initialize Vertex AI with service account credentials or ADC
+// This will try service account credentials first, then fall back to ADC
+let vertex: VertexAI;
+
+if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
+  // Use service account credentials from environment variables
+  const credentials = {
+    client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+  };
+  
+  vertex = new VertexAI({
+    project: process.env.GOOGLE_CLOUD_PROJECT || "",
+    location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
+    googleAuthOptions: {
+      credentials: credentials,
+    },
+  });
+} else {
+  // Fall back to Application Default Credentials (ADC)
+  vertex = new VertexAI({
+    project: process.env.GOOGLE_CLOUD_PROJECT || "",
+    location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
+  });
+}
 
 // Get the generative model
 const model = vertex.getGenerativeModel({
