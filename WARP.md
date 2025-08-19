@@ -6,53 +6,69 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 EmailGenius Broadcasts Generator is an AI-powered email broadcast creation tool that uses Google Cloud Vertex AI (Gemini 1.5 Pro) to generate high-engagement email campaigns optimized for both ConvertKit and ActiveCampaign platforms. The application specializes in creating financial product marketing emails that mimic transactional communications to maximize open rates and conversions.
 
+## Production Environment Setup
+
+The application is deployed on a Google Cloud Platform (GCP) Compute Engine VM running Ubuntu 22.04 LTS with Apache 2.0. The project is owned by the `www-data` user for proper web server permissions.
+
+### Important: User Context
+**All development and deployment commands must be run with `sudo -u www-data` prefix** to maintain proper file ownership and permissions in the production environment.
+
 ## Development Commands
 
-### Core Next.js Commands
+### Core Next.js Commands (Production Environment)
 
 ```bash
-# Development server (runs on port 3020)
-npm run dev
+# Development server (runs on port 3020) - Production environment
+sudo -u www-data npm run dev
 
-# Production build
-npm run build
+# Production build - Production environment
+sudo -u www-data npm run build
 
-# Start production server
-npm start
+# Start production server - Production environment  
+sudo -u www-data npm start
 
-# ESLint linting
-npm run lint
+# ESLint linting - Production environment
+sudo -u www-data npm run lint
+
+# Install dependencies - Production environment
+sudo -u www-data npm install
 ```
 
-### Project Setup
+### Project Setup (Production Environment)
 
 ```bash
+# Navigate to project directory
+cd /var/www/html/emailgenius-broadcasts-generator
+
 # Install dependencies
-npm install
+sudo -u www-data npm install
 
-# Copy environment template
-cp .env.example .env.local
+# Copy environment template (if needed)
+sudo -u www-data cp .env.example .env.local
 
-# Edit environment variables
-# Set GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION
+# Edit environment variables as www-data user
+sudo -u www-data nano .env.local
 ```
 
-### Google Cloud Authentication Setup
+### Google Cloud Authentication Setup (Production)
 
-```bash
-# Option A: Application Default Credentials (Recommended for local development)
-gcloud auth application-default login
+The application now uses **service account credentials via environment variables** instead of Application Default Credentials (ADC). The authentication is configured in the PM2 ecosystem configuration.
 
-# Option B: Service Account Key (Alternative)
-# Set GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account-key.json
-```
+**Current Authentication Method:**
+- Service Account Email: `sheets-service-account@absolute-brook-452020-d5.iam.gserviceaccount.com`
+- Private Key: Stored as environment variable in `ecosystem.config.js`
+- Project: `absolute-brook-452020-d5`
+- Location: `us-central1`
+
+**Required Service Account Permissions:**
+- Vertex AI User (`roles/aiplatform.user`)
 
 ## Architecture Overview
 
 ### AI Integration
 
 - **Primary AI Service**: Google Cloud Vertex AI using Gemini 1.5 Pro model
-- **Authentication**: Application Default Credentials (ADC) system with automatic fallback
+- **Authentication**: Service Account Credentials via environment variables with ADC fallback
 - **Request Processing**: JSON-based system prompts with comprehensive email generation rules
 
 ### Frontend Architecture
@@ -68,6 +84,7 @@ gcloud auth application-default login
 - **API Route**: `/api/generate-broadcast` - Processes form data and generates email content
 - **Content Format**: Structured JSON responses with platform-specific formatting
 - **Error Handling**: Comprehensive error parsing and user-friendly messages
+- **Authentication**: Supports both service account credentials and ADC fallback
 
 ### Rich Text Copy System
 
@@ -122,26 +139,111 @@ The AI system specializes in creating:
 - **Automatic Conversion**: Markdown automatically converts to HTML for rich text editors
 - **Fallback Support**: Graceful degradation for older browsers
 
-## Environment Variables
+## Environment Variables (Production)
 
-### Required Configuration
+### Current Production Configuration
+
+The production environment uses service account credentials stored in the PM2 ecosystem configuration:
 
 ```env
 # Google Cloud Project Configuration
-GOOGLE_CLOUD_PROJECT=your-google-cloud-project-id
+GOOGLE_CLOUD_PROJECT=absolute-brook-452020-d5
 GOOGLE_CLOUD_LOCATION=us-central1
 
-# Authentication (choose one method):
+# Service Account Authentication (via ecosystem.config.js)
+GOOGLE_SERVICE_ACCOUNT_EMAIL=sheets-service-account@absolute-brook-452020-d5.iam.gserviceaccount.com
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n[PRIVATE_KEY_CONTENT]\n-----END PRIVATE KEY-----"
 
-# Option 1: Application Default Credentials (Recommended)
-# Run: gcloud auth application-default login
+# Additional Vertex AI Configuration
+VERTEX_AI_DATASTORE=projects/absolute-brook-452020-d5/locations/global/collections/default_collection/dataStores/ejemplos-y-plantillas-folder-august-2025_1753117635099
+VERTEX_AI_PROJECT_ID=absolute-brook-452020-d5
+VERTEX_AI_LOCATION=global
 
-# Option 2: Service Account JSON Key File
-# GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/service-account-key.json
+# Application Configuration
+PORT=3020
+NODE_ENV=production
+```
 
-# Option 3: Service Account via Environment Variables (Less Secure)
-# GOOGLE_SERVICE_ACCOUNT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
-# GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n"
+### Alternative Authentication Methods
+
+The application supports multiple authentication methods with automatic fallback:
+
+1. **Service Account Credentials** (Current Production Method)
+2. **Application Default Credentials** (ADC) - Fallback method
+3. **Service Account JSON Key File** (Alternative)
+
+## Production Deployment Commands
+
+### PM2 Process Management (Production Environment)
+
+```bash
+# Check application status
+sudo -u www-data pm2 status
+
+# Start application with ecosystem configuration
+sudo -u www-data pm2 start ecosystem.config.js --env production
+
+# Restart application
+sudo -u www-data pm2 restart emailgenius-broadcasts-generator
+
+# Stop application
+sudo -u www-data pm2 stop emailgenius-broadcasts-generator
+
+# Reload application (zero-downtime)
+sudo -u www-data pm2 reload emailgenius-broadcasts-generator
+
+# View logs
+sudo -u www-data pm2 logs emailgenius-broadcasts-generator
+
+# View specific number of log lines
+sudo -u www-data pm2 logs emailgenius-broadcasts-generator --lines 50
+
+# Save PM2 configuration
+sudo -u www-data pm2 save
+```
+
+### Build and Deploy Workflow (Production Environment)
+
+```bash
+# Navigate to project directory
+cd /var/www/html/emailgenius-broadcasts-generator
+
+# Install dependencies
+sudo -u www-data npm install
+
+# Build application
+sudo -u www-data npm run build
+
+# Restart PM2 process
+sudo -u www-data pm2 restart emailgenius-broadcasts-generator
+
+# Check status
+sudo -u www-data pm2 status
+
+# View logs to verify successful restart
+sudo -u www-data pm2 logs emailgenius-broadcasts-generator --lines 20
+```
+
+### Git Operations (Production Environment)
+
+```bash
+# Check git status
+sudo -u www-data git status
+
+# Pull latest changes
+sudo -u www-data git pull origin main
+
+# Add files to staging
+sudo -u www-data git add [files]
+
+# Commit changes
+sudo -u www-data git commit -m "Your commit message"
+
+# Push changes
+sudo -u www-data git push origin main
+
+# View git log
+sudo -u www-data git log --oneline -10
 ```
 
 ## Project Structure Deep Dive
@@ -150,7 +252,7 @@ GOOGLE_CLOUD_LOCATION=us-central1
 
 ```markdown
 app/
-├── api/generate-broadcast/route.ts # Main AI API endpoint with comprehensive system prompts
+├── api/generate-broadcast/route.ts # Main AI API endpoint with service account authentication
 ├── page.tsx # Main application with form handling and rich text copying
 ├── layout.tsx # App layout with Poppins font and gradient background
 └── globals.css # Global styles and Tailwind configuration
@@ -170,6 +272,11 @@ lib/
 │ ├── RICH_TEXT_COPY_FIX.md # Technical documentation for copy functionality
 │ └── [other technical docs]
 └── images/ # UI screenshots for reference
+
+# Production Configuration Files
+ecosystem.config.js # PM2 configuration with service account credentials
+.env.production.local # Production environment variables (if used)
+next.config.js # Next.js configuration with environment variable exposure
 ```
 
 ### System Prompt Architecture
@@ -216,7 +323,7 @@ The system avoids generic "Apply Now" or "Get Loan" buttons in favor of action-o
 - "CONFIRM"
 - "AUTHORIZE SHIPMENT"
 
-## Development Workflow
+## Development Workflow (Production Environment)
 
 ### Form Handling Flow
 
@@ -239,7 +346,7 @@ The system avoids generic "Apply Now" or "Get Loan" buttons in favor of action-o
 
 ### Core Dependencies
 
-- `@google-cloud/vertexai`: Google Cloud AI integration
+- `@google-cloud/vertexai`: Google Cloud AI integration with service account support
 - `@radix-ui/react-*`: UI component foundation
 - `marked`: Markdown to HTML conversion for rich text copying
 - `react-hook-form`: Type-safe form management
@@ -250,27 +357,91 @@ The system avoids generic "Apply Now" or "Get Loan" buttons in favor of action-o
 
 ### Recent Major Updates
 
-The project includes significant improvements documented in `RICH_TEXT_COPY_FIX.md`:
+The project includes significant improvements documented in various files:
 
 - Fixed HTML display issues in ActiveCampaign's rich text editor
 - Implemented dual-format copying (HTML + plain text)
 - Added platform-specific content detection
 - Enhanced browser compatibility with fallback mechanisms
+- **Updated to service account authentication for production stability**
 
-## Google Cloud Setup Requirements
+## Production Server Configuration
 
-### Prerequisites
+### Server Details
 
-1. Google Cloud Project with Vertex AI API enabled
-2. Service account with Vertex AI permissions
-3. Google Cloud CLI installed and configured
-4. Billing account attached to project
+- **Platform**: Google Cloud Compute Engine VM
+- **OS**: Ubuntu 22.04 LTS with Apache 2.0
+- **Process Management**: PM2 with ecosystem configuration
+- **Reverse Proxy**: Apache configured for Next.js application
+- **SSL**: Certbot with Let's Encrypt for HTTPS
+- **Service Persistence**: PM2 startup script with systemd
+- **Domain**: https://email.topfinanzas.com
+- **Application Port**: 3020
 
-### Authentication Options
+### Apache Configuration
 
-- **Development**: Use `gcloud auth application-default login`
-- **Production**: Use service account key file or attached service account
-- **CI/CD**: Use service account key via environment variables
+The application is served through Apache reverse proxy with:
+- HTTP to HTTPS redirect
+- Static asset serving for `/_next/static/`
+- WebSocket support for development
+- Security headers (HSTS, X-Frame-Options, etc.)
+
+### PM2 Production Setup
+
+```bash
+# PM2 configuration location
+/var/www/html/emailgenius-broadcasts-generator/ecosystem.config.js
+
+# PM2 logs location
+/var/log/pm2/emailgenius-broadcasts-*.log
+
+# PM2 process data
+/var/www/.pm2/
+```
+
+## Authentication Architecture (Updated)
+
+### Current Production Setup
+
+The application now uses a **hybrid authentication approach** with automatic fallback:
+
+1. **Primary**: Service Account Credentials via Environment Variables
+   - Email: `sheets-service-account@absolute-brook-452020-d5.iam.gserviceaccount.com`
+   - Private Key: Stored in PM2 environment configuration
+   - Permissions: Vertex AI User role
+
+2. **Fallback**: Application Default Credentials (ADC)
+   - Used if service account credentials are not available
+   - Maintains backward compatibility
+
+### Authentication Code Structure
+
+```typescript
+// In app/api/generate-broadcast/route.ts
+let vertex: VertexAI;
+
+if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
+  // Use service account credentials from environment variables
+  const credentials = {
+    client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+  };
+  
+  vertex = new VertexAI({
+    project: process.env.GOOGLE_CLOUD_PROJECT || "",
+    location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
+    googleAuthOptions: {
+      credentials: credentials,
+    },
+  });
+} else {
+  // Fall back to Application Default Credentials (ADC)
+  vertex = new VertexAI({
+    project: process.env.GOOGLE_CLOUD_PROJECT || "",
+    location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
+  });
+}
+```
 
 ## Form Configuration Details
 
@@ -285,14 +456,43 @@ The project includes significant improvements documented in `RICH_TEXT_COPY_FIX.
 - **UK**: English content, UK cultural adaptation, <topfinance@topfinanzas.com>
 - **Mexico**: Spanish content, Mexican cultural nuances, <info@topfinanzas.com>
 
-## Troubleshooting
+## Troubleshooting (Production Environment)
 
-### Common Issues
+### Common Issues and Solutions
 
-1. **Authentication Errors**: Verify Google Cloud credentials and project permissions
-2. **AI Generation Failures**: Check project quota limits and API availability
-3. **Copy Functionality Issues**: Ensure modern browser with ClipboardItem API support
-4. **Build Errors**: Verify all dependencies are installed and TypeScript types are resolved
+1. **Authentication Errors**: 
+   ```bash
+   # Verify service account permissions in Google Cloud Console
+   # Check PM2 environment variables
+   sudo -u www-data pm2 show emailgenius-broadcasts-generator
+   ```
+
+2. **AI Generation Failures**: 
+   ```bash
+   # Check project quota limits and API availability
+   # View detailed logs
+   sudo -u www-data pm2 logs emailgenius-broadcasts-generator --lines 100
+   ```
+
+3. **Copy Functionality Issues**: 
+   - Ensure modern browser with ClipboardItem API support
+   - Check browser security settings for clipboard access
+
+4. **Build Errors**: 
+   ```bash
+   # Verify all dependencies are installed
+   sudo -u www-data npm install
+   # Check TypeScript configuration
+   sudo -u www-data npm run build
+   ```
+
+5. **Permission Issues**:
+   ```bash
+   # Ensure proper file ownership
+   sudo chown -R www-data:www-data /var/www/html/emailgenius-broadcasts-generator
+   # Verify PM2 permissions
+   sudo chown -R www-data:www-data /var/www/.pm2
+   ```
 
 ### Debug Mode
 
@@ -302,15 +502,39 @@ The application includes comprehensive error handling with detailed console logg
 - JSON parsing issues
 - Clipboard API failures
 - Form validation errors
+- Authentication failures
+
+### Health Check Commands
+
+```bash
+# Test application endpoint
+curl https://email.topfinanzas.com/api/generate-broadcast \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"platform":"ConvertKit","emailType":"security-alert","market":"USA","imageType":"product-image"}'
+
+# Check PM2 status
+sudo -u www-data pm2 status
+
+# Check Apache configuration
+sudo apache2ctl configtest
+
+# Check SSL certificate
+sudo certbot certificates
+
+# View system resources
+sudo -u www-data pm2 monit
+```
 
 ## Major Project Updates & Fixes
 
-### Authentication Migration (Completed)
+### Authentication Migration (Completed - Latest)
 
-- **Migrated from**: Google AI Studio API keys → Google Cloud Vertex AI with ADC
-- **Security Enhancement**: Eliminated hardcoded API keys, implemented service account authentication
-- **Model Upgrade**: `gemini-pro` → `gemini-1.5-pro`
-- **Benefits**: Better security, scalability, and Google Cloud integration
+- **Migrated from**: File-based ADC → Service Account Credentials via Environment Variables
+- **Security Enhancement**: Eliminated dependency on service account JSON files
+- **Flexibility**: Added automatic fallback to ADC for development environments
+- **Production Stability**: Direct credential management through PM2 configuration
+- **Benefits**: Better security, easier deployment, centralized credential management
 
 ### Rich Text Copy System (Fixed)
 
@@ -350,12 +574,33 @@ The application includes comprehensive error handling with detailed console logg
 - **Reverse Proxy**: Apache configured for Next.js application
 - **SSL**: Certbot with Let's Encrypt for HTTPS
 - **Service Persistence**: PM2 startup script with systemd
+- **File Ownership**: All project files owned by `www-data` user
 
-### Authentication Options
+### Production Deployment Workflow
 
-1. **Development**: Application Default Credentials (`gcloud auth application-default login`)
-2. **Production**: Service account with JSON key file
-3. **CI/CD**: Environment variables with service account credentials
+```bash
+# Complete deployment workflow
+cd /var/www/html/emailgenius-broadcasts-generator
+
+# Pull latest changes
+sudo -u www-data git pull origin main
+
+# Install any new dependencies
+sudo -u www-data npm install
+
+# Build the application
+sudo -u www-data npm run build
+
+# Restart PM2 process
+sudo -u www-data pm2 restart emailgenius-broadcasts-generator
+
+# Verify deployment
+sudo -u www-data pm2 status
+curl https://email.topfinanzas.com/
+
+# Save PM2 configuration
+sudo -u www-data pm2 save
+```
 
 ### PM2 Ecosystem Configuration
 
@@ -366,104 +611,7 @@ The project includes `ecosystem.config.js` with:
 - **Memory Limit**: 1GB with automatic restart
 - **Logging**: Centralized logs in `/var/log/pm2/`
 - **Auto Restart**: Enabled with crash protection
-- **Environment Variables**: Production-ready configuration
-
-### Initial Production Setup
-
-```bash
-# Install PM2 globally
-npm install -g pm2
-
-# Create PM2 log directory
-sudo mkdir -p /var/log/pm2
-sudo chown $USER:$USER /var/log/pm2
-
-# Clone and setup project
-git clone https://github.com/your-username/emailgenius-broadcasts-generator.git /opt/emailgenius-broadcasts-generator
-cd /opt/emailgenius-broadcasts-generator
-
-# Install dependencies and build
-npm install
-npm run build
-
-# Update ecosystem.config.js with your actual values
-# Edit GOOGLE_CLOUD_PROJECT and other environment variables
-
-# Start application with PM2
-pm2 start ecosystem.config.js --env production
-
-# Save PM2 configuration
-pm2 save
-
-# Setup PM2 to start on system boot
-pm2 startup
-# Follow the instructions provided by the command above
-sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u $USER --hp $HOME
-```
-
-### Deployment Commands
-
-```bash
-# Check application status
-pm2 status
-pm2 show emailgenius-broadcasts-generator
-
-# View logs
-pm2 logs emailgenius-broadcasts-generator
-pm2 logs emailgenius-broadcasts-generator --lines 100
-
-# Restart application
-pm2 restart emailgenius-broadcasts-generator
-
-# Reload application (zero-downtime)
-pm2 reload emailgenius-broadcasts-generator
-
-# Stop application
-pm2 stop emailgenius-broadcasts-generator
-
-# Update application
-cd /opt/emailgenius-broadcasts-generator
-git pull origin main
-npm install
-npm run build
-pm2 reload emailgenius-broadcasts-generator
-
-# Monitor in real-time
-pm2 monit
-```
-
-### PM2 Log Management
-
-```bash
-# View specific log files
-tail -f /var/log/pm2/emailgenius-error.log
-tail -f /var/log/pm2/emailgenius-out.log
-tail -f /var/log/pm2/emailgenius-combined.log
-
-# Clear logs
-pm2 flush
-
-# Rotate logs (configure logrotate)
-sudo nano /etc/logrotate.d/pm2
-```
-
-### Logrotate Configuration for PM2
-
-Create `/etc/logrotate.d/pm2`:
-
-```text
-/var/log/pm2/*.log {
-    daily
-    missingok
-    rotate 30
-    compress
-    notifempty
-    create 0640 $USER $USER
-    postrotate
-        pm2 reloadLogs
-    endscript
-}
-```
+- **Environment Variables**: Production-ready configuration with service account credentials
 
 ## Advanced Features & Fixes
 
@@ -493,83 +641,41 @@ Create `/etc/logrotate.d/pm2`:
 - **Browser Fallback**: Graceful degradation for older browsers
 - **Visual Feedback**: Success confirmation with auto-reset after 2 seconds
 
-## Troubleshooting Guide
+## Application Testing & Verification
 
-### Authentication Issues
+### API Endpoint Testing
 
 ```bash
-# Verify ADC setup
-gcloud auth application-default print-access-token
+# Test ConvertKit generation
+curl -X POST https://email.topfinanzas.com/api/generate-broadcast \
+  -H "Content-Type: application/json" \
+  -d '{"platform":"ConvertKit","emailType":"security-alert","market":"USA","imageType":"product-image"}'
 
-# Check Vertex AI API
-gcloud services list --enabled --filter="name:aiplatform.googleapis.com"
+# Test ActiveCampaign generation
+curl -X POST https://email.topfinanzas.com/api/generate-broadcast \
+  -H "Content-Type: application/json" \
+  -d '{"platform":"ActiveCampaign","emailType":"shipping-update","market":"Mexico","imageType":"shipment-tracking"}'
 
-# Test credentials
-curl -X POST http://localhost:3020/api/generate-broadcast -H "Content-Type: application/json" -d '{"platform":"ConvertKit","emailType":"security-alert","market":"USA","imageType":"product-image"}'
+# Test local endpoint (bypass Apache)
+curl -X POST http://localhost:3020/api/generate-broadcast \
+  -H "Content-Type: application/json" \
+  -d '{"platform":"ConvertKit","emailType":"product","market":"UK","imageType":"lifestyle-photo"}'
 ```
 
-### PM2 Service Management
+### Application Health Monitoring
 
 ```bash
-# Check application status
-pm2 status
-pm2 show emailgenius-broadcasts-generator
+# Monitor PM2 processes in real-time
+sudo -u www-data pm2 monit
+
+# Check resource usage
+sudo -u www-data pm2 show emailgenius-broadcasts-generator
 
 # View detailed logs
-pm2 logs emailgenius-broadcasts-generator --lines 50
-tail -f /var/log/pm2/emailgenius-error.log
+sudo tail -f /var/log/pm2/emailgenius-broadcasts-combined.log
 
-# Check if PM2 is managing the process
-pm2 list
-
-# Verify Apache proxy
-sudo apache2ctl configtest
-sudo netstat -tlnp | grep :3000
-
-# Restart PM2 process if needed
-pm2 restart emailgenius-broadcasts-generator
+# Check Apache access logs
+sudo tail -f /var/log/apache2/access.log | grep email.topfinanzas.com
 ```
 
-### Development Workflow
-
-```bash
-# Health check during development
-node --version  # Verify Node.js 18+
-npm run build   # Test production build
-npm run dev     # Start development server
-
-# Authentication verification
-echo $GOOGLE_APPLICATION_CREDENTIALS
-gcloud config get-value project
-```
-
-## Content Generation Examples
-
-### Before Enhancements (Simple)
-
-```markdown
-Hi %FIRSTNAME%, Your card is ready.
-
-- Track shipment
-- Confirm receipt
-  **The Card Team**
-```
-
-### After Enhancements (Comprehensive)
-
-```markdown
-Hi %FIRSTNAME%,
-
-Your **account status** requires immediate attention. To ensure your card is delivered without delays, please **verify your shipping details** as soon as possible.
-
-- ✅ **Action Required:** Confirm your address details
-- ⚠️ **Important:** Your package is currently on hold pending confirmation
-- 📊 **Status Update:** View tracking details to monitor delivery
-
-Don't let delivery delays affect your account standing. Complete verification now to ensure seamless processing.
-
-**The Card Issuance Team**
-Logistics & Fulfillment Division
-```
-
-This project represents a sophisticated AI-powered marketing tool with advanced clipboard integration, multi-platform email generation capabilities, and enterprise-grade production deployment architecture.
+This project represents a sophisticated AI-powered marketing tool with advanced clipboard integration, multi-platform email generation capabilities, service account authentication, and enterprise-grade production deployment architecture.
