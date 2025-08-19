@@ -6,6 +6,8 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 EmailGenius Broadcasts Generator is an AI-powered email broadcast creation tool that uses Google Cloud Vertex AI (Gemini 2.5 Flash) to generate high-engagement email campaigns optimized for both ConvertKit and ActiveCampaign platforms. The application specializes in creating financial product marketing emails that mimic transactional communications to maximize open rates and conversions.
 
+**Latest Update**: The application now includes automated AI-powered image generation using Google Cloud's Vertex AI Imagen model, creating compelling visual headers for every email campaign.
+
 ## Production Environment Setup
 
 The application is deployed on a Google Cloud Platform (GCP) Compute Engine VM running Ubuntu 22.04 LTS with Apache 2.0. The project is owned by the `www-data` user for proper web server permissions.
@@ -70,9 +72,11 @@ The application now uses **service account credentials via environment variables
 
 ### AI Integration
 
-- **Primary AI Service**: Google Cloud Vertex AI using Gemini 1.5 Pro model
+- **Primary AI Service**: Google Cloud Vertex AI using Gemini 1.5 Pro model for text generation
+- **Image Generation Service**: Vertex AI Imagen 4.0 Preview model for visual content creation
 - **Authentication**: Service Account Credentials via environment variables with ADC fallback
 - **Request Processing**: JSON-based system prompts with comprehensive email generation rules
+- **Image Processing**: Automatic generation of 16:9 aspect ratio images optimized for email headers
 
 ### Frontend Architecture
 
@@ -84,10 +88,12 @@ The application now uses **service account credentials via environment variables
 
 ### Backend API
 
-- **API Route**: `/api/generate-broadcast` - Processes form data and generates email content
+- **Broadcast API**: `/api/generate-broadcast` - Processes form data and generates email content
+- **Image API**: `/api/generate-image` - Generates AI-powered images from prompts
 - **Content Format**: Structured JSON responses with platform-specific formatting
 - **Error Handling**: Comprehensive error parsing and user-friendly messages
 - **Authentication**: Supports both service account credentials and ADC fallback
+- **Image Delivery**: Base64-encoded PNG images delivered as data URLs
 
 ### Rich Text Copy System
 
@@ -108,7 +114,8 @@ The system generates different content formats for each platform:
 - Preview text under 150 characters
 - Markdown-formatted email body with `{{ subscriber.first_name }}` variable
 - CTA button text under 5 words
-- Image generation prompt
+- Image generation prompt (automatically triggers AI image creation)
+- Destination URL with UTM parameters
 
 #### ActiveCampaign Format
 
@@ -118,6 +125,7 @@ The system generates different content formats for each platform:
 - From Email (market-specific: `topfinance@topfinanzas.com` for US/UK, `info@topfinanzas.com` for Mexico)
 - Natural text formatted email body with `%FIRSTNAME%` variable
 - CTA button text and destination URL with UTM parameters
+- Image generation prompt (automatically triggers AI image creation)
 
 ### Multi-Market Content Generation
 
@@ -156,6 +164,10 @@ GOOGLE_CLOUD_LOCATION=us-central1
 # Service Account Authentication (via ecosystem.config.js)
 GOOGLE_SERVICE_ACCOUNT_EMAIL=sheets-service-account@absolute-brook-452020-d5.iam.gserviceaccount.com
 GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n[PRIVATE_KEY_CONTENT]\n-----END PRIVATE KEY-----"
+
+# Optional Service Account Fields (for enhanced authentication)
+GOOGLE_PRIVATE_KEY_ID=optional-private-key-id
+GOOGLE_CLIENT_ID=optional-client-id
 
 # Additional Vertex AI Configuration
 VERTEX_AI_DATASTORE=projects/absolute-brook-452020-d5/locations/global/collections/default_collection/dataStores/ejemplos-y-plantillas-folder-august-2025_1753117635099
@@ -255,8 +267,10 @@ sudo -u www-data git log --oneline -10
 
 ```markdown
 app/
-├── api/generate-broadcast/route.ts # Main AI API endpoint with service account authentication
-├── page.tsx # Main application with form handling and rich text copying
+├── api/
+│   ├── generate-broadcast/route.ts # Main AI API endpoint for email content generation
+│   └── generate-image/route.ts # Image generation endpoint using Vertex AI Imagen
+├── page.tsx # Main application with form handling, rich text copying, and image display
 ├── layout.tsx # App layout with Poppins font and gradient background
 └── globals.css # Global styles and Tailwind configuration
 
@@ -270,17 +284,23 @@ components/ui/ # Shadcn/ui components
 
 lib/
 ├── utils.ts # Tailwind class merging utility
+├── vertexai-imagen.ts # Vertex AI Imagen service with Service Account authentication
 ├── documents/ # Comprehensive project documentation
 │ ├── emailgenius-broadcasts-generator-system-prompt.md
 │ ├── RICH_TEXT_COPY_FIX.md # Technical documentation for copy functionality
 │ └── [other technical docs]
 └── images/ # UI screenshots for reference
 
+docs/
+└── IMAGE_GENERATION.md # Comprehensive image generation documentation
+
 # Production Configuration Files
 
 ecosystem.config.js # PM2 configuration with service account credentials
 .env.production.local # Production environment variables (if used)
+.env.local.example # Environment template with setup instructions
 next.config.js # Next.js configuration with environment variable exposure
+IMPLEMENTATION_SUMMARY.md # Image generation implementation summary
 ```
 
 ### System Prompt Architecture
@@ -337,6 +357,8 @@ The system avoids generic "Apply Now" or "Get Loan" buttons in favor of action-o
 4. POST request to `/api/generate-broadcast`
 5. AI processing with structured JSON response
 6. Dynamic UI rendering with individual copy buttons
+7. Automatic image generation from imagePrompt field
+8. Image display with download functionality
 
 ### Copy System Workflow
 
@@ -351,10 +373,11 @@ The system avoids generic "Apply Now" or "Get Loan" buttons in favor of action-o
 ### Core Dependencies
 
 - `@google-cloud/vertexai`: Google Cloud AI integration with service account support
+- `google-auth-library`: Service Account authentication for Vertex AI Imagen
 - `@radix-ui/react-*`: UI component foundation
 - `marked`: Markdown to HTML conversion for rich text copying
 - `react-hook-form`: Type-safe form management
-- `lucide-react`: Icon library
+- `lucide-react`: Icon library (includes image and download icons)
 - `tailwindcss`: Utility-first CSS framework
 - `class-variance-authority`: Component variant management
 - `tailwind-merge`: Conditional class merging
@@ -692,4 +715,174 @@ sudo tail -f /var/log/pm2/emailgenius-broadcasts-combined.log
 sudo tail -f /var/log/apache2/access.log | grep email.topfinanzas.com
 ```
 
-This project represents a sophisticated AI-powered marketing tool with advanced clipboard integration, multi-platform email generation capabilities, service account authentication, and enterprise-grade production deployment architecture.
+## Image Generation Feature (New)
+
+### Overview
+
+The application now includes automated AI-powered image generation using Google Cloud's Vertex AI Imagen model (imagen-4.0-generate-preview-06-06). This feature automatically creates visually compelling header images for email campaigns based on the generated email content.
+
+### Image Generation Architecture
+
+#### Backend Service (`lib/vertexai-imagen.ts`)
+
+- **Authentication**: Uses GCP Service Account credentials with proper error handling
+- **Model Configuration**: Imagen 4.0 Preview with 16:9 aspect ratio
+- **Safety Settings**: Configured with `block_few` safety level and person generation allowed
+- **Response Format**: Base64-encoded PNG images delivered as data URLs
+
+#### API Endpoint (`/api/generate-image`)
+
+**POST /api/generate-image**
+- Request: `{ imagePrompt: string }`
+- Response: `{ imageUrl: string, success: boolean }`
+- Error Codes:
+  - 401: Authentication failed
+  - 403: Permission denied
+  - 429: Quota exceeded
+  - 500: Configuration error
+
+**GET /api/generate-image**
+- Health check endpoint
+- Returns service configuration and authentication status
+
+### Image Generation Parameters
+
+```javascript
+{
+  aspectRatio: "16:9",           // Optimized for email headers
+  sampleCount: 1,                // Single image generation
+  negativePrompt: "...",         // Avoids visual artifacts
+  enhancePrompt: false,           // Uses original prompt
+  personGeneration: "allow_all",  // Allows diverse representations
+  safetySetting: "block_few",     // Moderate safety filtering
+  addWatermark: false,            // No watermarks
+  includeRaiReason: true,         // Includes AI reasoning
+  language: "auto"                // Automatic language detection
+}
+```
+
+### Frontend Integration
+
+#### State Management
+```typescript
+const [imageUrl, setImageUrl] = useState<string>("");
+const [imageLoading, setImageLoading] = useState(false);
+const [imageError, setImageError] = useState<string | null>(null);
+```
+
+#### Automatic Generation Flow
+
+1. Email content generation completes
+2. System extracts `imagePrompt` from generated content
+3. Automatic POST request to `/api/generate-image`
+4. Loading state with progress indicator
+5. Image display with rounded corners and shadow
+6. Download button for saving generated image
+
+#### User Interface Features
+
+- **Loading State**: Animated spinner with "Generando imagen..." message
+- **Error Handling**: Retry button on failure with error message display
+- **Image Display**: Responsive container with proper aspect ratio
+- **Download Function**: One-click download as PNG file
+- **Manual Generation**: Fallback button if automatic generation fails
+
+### Image Type Options
+
+- **Product Image**: Financial product visuals
+- **Lifestyle Photo**: People using financial services
+- **Infographic**: Data visualization
+- **Icon**: Simple iconographic representations
+- **Animated GIF**: Dynamic visual content (prompt only)
+- **Shipment Tracking**: Package and delivery visuals
+- **Graphic**: General graphic design elements
+
+### Production Environment Variables
+
+```env
+# Required for Image Generation
+GOOGLE_CLOUD_PROJECT=absolute-brook-452020-d5
+GOOGLE_CLOUD_LOCATION=us-central1
+GOOGLE_SERVICE_ACCOUNT_EMAIL=sheets-service-account@absolute-brook-452020-d5.iam.gserviceaccount.com
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+
+# Optional (enhances authentication)
+GOOGLE_PRIVATE_KEY_ID=optional-key-id
+GOOGLE_CLIENT_ID=optional-client-id
+```
+
+### Service Account Permissions Required
+
+- **Vertex AI User** (`roles/aiplatform.user`)
+- **Vertex AI Service Agent** (for enhanced permissions)
+
+### Testing Image Generation
+
+```bash
+# Test health check endpoint
+curl https://email.topfinanzas.com/api/generate-image
+
+# Test image generation (local)
+curl -X POST http://localhost:3020/api/generate-image \
+  -H "Content-Type: application/json" \
+  -d '{"imagePrompt": "Generate an ultra-realistic image of a credit card on a modern desk with soft lighting. Generate the image with a 16:9 aspect ratio."}'
+
+# Monitor image generation in logs
+sudo -u www-data pm2 logs emailgenius-broadcasts-generator --lines 50
+```
+
+### Image Generation Troubleshooting
+
+1. **Authentication Errors (401)**:
+   - Verify Service Account email and private key in environment
+   - Check PM2 ecosystem configuration
+   - Ensure private key format includes newlines
+
+2. **Permission Denied (403)**:
+   - Verify Service Account has Vertex AI User role
+   - Check project IAM settings in GCP Console
+   - Ensure Vertex AI API is enabled
+
+3. **Quota Exceeded (429)**:
+   - Check Vertex AI quotas in GCP Console
+   - Wait and retry after quota reset
+   - Consider upgrading quota limits
+
+4. **No Image Generated**:
+   - Verify `imagePrompt` field exists in broadcast response
+   - Check browser console for client-side errors
+   - Ensure proper network connectivity
+
+### Image Download Implementation
+
+```javascript
+// Automatic download function
+const downloadImage = async () => {
+  const response = await fetch(imageUrl);
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `email-header-image-${Date.now()}.png`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+};
+```
+
+### Performance Considerations
+
+- **Asynchronous Generation**: Non-blocking UI during image creation
+- **Base64 Encoding**: Efficient delivery without external storage
+- **Progressive Loading**: Image appears immediately when ready
+- **Error Recovery**: Retry mechanism for failed generations
+
+### Security Implementation
+
+- **Credential Management**: Service Account keys in environment variables only
+- **No Hardcoded Secrets**: All sensitive data externalized
+- **Secure Authentication**: Proper token management with google-auth-library
+- **Error Sanitization**: Sensitive information removed from error messages
+
+This project represents a sophisticated AI-powered marketing tool with advanced clipboard integration, multi-platform email generation capabilities, automated image generation, service account authentication, and enterprise-grade production deployment architecture.
