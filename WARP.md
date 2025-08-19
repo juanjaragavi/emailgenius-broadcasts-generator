@@ -11,6 +11,7 @@ EmailGenius Broadcasts Generator is an AI-powered email broadcast creation tool 
 The application is deployed on a Google Cloud Platform (GCP) Compute Engine VM running Ubuntu 22.04 LTS with Apache 2.0. The project is owned by the `www-data` user for proper web server permissions.
 
 ### Important: User Context
+
 **All development and deployment commands must be run with `sudo -u www-data` prefix** to maintain proper file ownership and permissions in the production environment.
 
 ## Development Commands
@@ -24,7 +25,7 @@ sudo -u www-data npm run dev
 # Production build - Production environment
 sudo -u www-data npm run build
 
-# Start production server - Production environment  
+# Start production server - Production environment
 sudo -u www-data npm start
 
 # ESLint linting - Production environment
@@ -55,12 +56,14 @@ sudo -u www-data nano .env.local
 The application now uses **service account credentials via environment variables** instead of Application Default Credentials (ADC). The authentication is configured in the PM2 ecosystem configuration.
 
 **Current Authentication Method:**
+
 - Service Account Email: `sheets-service-account@absolute-brook-452020-d5.iam.gserviceaccount.com`
 - Private Key: Stored as environment variable in `ecosystem.config.js`
 - Project: `absolute-brook-452020-d5`
 - Location: `us-central1`
 
 **Required Service Account Permissions:**
+
 - Vertex AI User (`roles/aiplatform.user`)
 
 ## Architecture Overview
@@ -274,6 +277,7 @@ lib/
 └── images/ # UI screenshots for reference
 
 # Production Configuration Files
+
 ecosystem.config.js # PM2 configuration with service account credentials
 .env.production.local # Production environment variables (if used)
 next.config.js # Next.js configuration with environment variable exposure
@@ -375,12 +379,13 @@ The project includes significant improvements documented in various files:
 - **Reverse Proxy**: Apache configured for Next.js application
 - **SSL**: Certbot with Let's Encrypt for HTTPS
 - **Service Persistence**: PM2 startup script with systemd
-- **Domain**: https://email.topfinanzas.com
+- **Domain**: <https://email.topfinanzas.com>
 - **Application Port**: 3020
 
 ### Apache Configuration
 
 The application is served through Apache reverse proxy with:
+
 - HTTP to HTTPS redirect
 - Static asset serving for `/_next/static/`
 - WebSocket support for development
@@ -406,6 +411,7 @@ The application is served through Apache reverse proxy with:
 The application now uses a **hybrid authentication approach** with automatic fallback:
 
 1. **Primary**: Service Account Credentials via Environment Variables
+
    - Email: `sheets-service-account@absolute-brook-452020-d5.iam.gserviceaccount.com`
    - Private Key: Stored in PM2 environment configuration
    - Permissions: Vertex AI User role
@@ -420,13 +426,16 @@ The application now uses a **hybrid authentication approach** with automatic fal
 // In app/api/generate-broadcast/route.ts
 let vertex: VertexAI;
 
-if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
+if (
+  process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
+  process.env.GOOGLE_PRIVATE_KEY
+) {
   // Use service account credentials from environment variables
   const credentials = {
     client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
     private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
   };
-  
+
   vertex = new VertexAI({
     project: process.env.GOOGLE_CLOUD_PROJECT || "",
     location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
@@ -460,25 +469,29 @@ if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) 
 
 ### Common Issues and Solutions
 
-1. **Authentication Errors**: 
+1. **Authentication Errors**:
+
    ```bash
    # Verify service account permissions in Google Cloud Console
    # Check PM2 environment variables
    sudo -u www-data pm2 show emailgenius-broadcasts-generator
    ```
 
-2. **AI Generation Failures**: 
+2. **AI Generation Failures**:
+
    ```bash
    # Check project quota limits and API availability
    # View detailed logs
    sudo -u www-data pm2 logs emailgenius-broadcasts-generator --lines 100
    ```
 
-3. **Copy Functionality Issues**: 
+3. **Copy Functionality Issues**:
+
    - Ensure modern browser with ClipboardItem API support
    - Check browser security settings for clipboard access
 
-4. **Build Errors**: 
+4. **Build Errors**:
+
    ```bash
    # Verify all dependencies are installed
    sudo -u www-data npm install
@@ -487,6 +500,7 @@ if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) 
    ```
 
 5. **Permission Issues**:
+
    ```bash
    # Ensure proper file ownership
    sudo chown -R www-data:www-data /var/www/html/emailgenius-broadcasts-generator
