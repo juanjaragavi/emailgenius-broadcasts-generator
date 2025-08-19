@@ -83,7 +83,7 @@ Added direct `<link>` tags in the HTML head for maximum compatibility:
 
 1. **Build Test**: `npm run build` - ✅ Successful
 2. **Development Server**: `npm run dev` - ✅ Running
-3. **Direct Access**: `http://localhost:3000/favicon.ico` - ✅ Accessible
+3. **Direct Access**: `http://localhost:3020/favicon.ico` - ✅ Accessible
 4. **Browser Tab**: Favicon now displays correctly
 
 ## Browser Cache Note

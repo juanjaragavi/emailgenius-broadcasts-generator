@@ -178,7 +178,7 @@ GOOGLE_CLOUD_PROJECT=tu-proyecto-google-cloud-id
 GOOGLE_CLOUD_LOCATION=us-central1
 GOOGLE_APPLICATION_CREDENTIALS=/opt/emailgenius/credentials/service-account.json
 NODE_ENV=production
-PORT=3000
+PORT=3020
 ```
 
 ### Paso 7: Configurar Apache como proxy reverso
@@ -202,8 +202,8 @@ sudo nano /etc/apache2/sites-available/emailgenius.conf
     ServerAlias www.tu-dominio.com
 
     # Proxy para Next.js
-    ProxyPass / http://localhost:3000/
-    ProxyPassReverse / http://localhost:3000/
+    ProxyPass / http://localhost:3020/
+    ProxyPassReverse / http://localhost:3020/
 
     # Configuración de headers
     ProxyPreserveHost On
@@ -346,7 +346,7 @@ sudo systemctl status emailgenius.service
 sudo systemctl status apache2
 
 # Verificar conectividad desde el servidor
-curl -X POST http://localhost:3000/api/generate-broadcast \
+curl -X POST http://localhost:3020/api/generate-broadcast \
   -H "Content-Type: application/json" \
   -d '{
     "platform": "ConvertKit",
@@ -377,7 +377,7 @@ sudo tail -f /var/log/apache2/emailgenius_error.log
 sudo tail -f /var/log/apache2/emailgenius_access.log
 
 # Verificar puertos abiertos
-sudo netstat -tlnp | grep :3000
+sudo netstat -tlnp | grep :3020
 sudo netstat -tlnp | grep :80
 
 # Verificar espacio en disco
@@ -453,7 +453,7 @@ sudo apache2ctl -M | grep proxy
 
 # Verificar puertos
 sudo netstat -tlnp | grep :80
-sudo netstat -tlnp | grep :3000
+sudo netstat -tlnp | grep :3020
 ```
 
 #### Error: "GOOGLE_APPLICATION_CREDENTIALS not found"
@@ -469,11 +469,11 @@ head -5 /opt/emailgenius/credentials/service-account.json
 echo $GOOGLE_APPLICATION_CREDENTIALS
 ```
 
-#### Error: "Port 3000 already in use"
+#### Error: "Port 3020 already in use"
 
 ```bash
 # Verificar qué proceso usa el puerto
-sudo lsof -i :3000
+sudo lsof -i :3020
 
 # Detener proceso si es necesario
 sudo systemctl stop emailgenius.service

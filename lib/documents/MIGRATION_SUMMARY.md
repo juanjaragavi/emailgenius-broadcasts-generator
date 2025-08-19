@@ -118,7 +118,7 @@ GOOGLE_CLOUD_LOCATION=us-central1
 
    ```bash
    npm run dev
-   # Visitar http://localhost:3000
+   # Visitar http://localhost:3020
    ```
 
 ## Notas Técnicas

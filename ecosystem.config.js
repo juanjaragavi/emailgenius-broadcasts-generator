@@ -11,7 +11,7 @@ module.exports = {
       max_memory_restart: "1G",
       env: {
         NODE_ENV: "production",
-        PORT: 3000,
+        PORT: 3020,
         GOOGLE_CLOUD_PROJECT: "absolute-brook-452020-d5",
         GOOGLE_CLOUD_LOCATION: "us-central1",
         GOOGLE_APPLICATION_CREDENTIALS:
@@ -19,7 +19,7 @@ module.exports = {
       },
       env_production: {
         NODE_ENV: "production",
-        PORT: 3000,
+        PORT: 3020,
         GOOGLE_CLOUD_PROJECT: "absolute-brook-452020-d5",
         GOOGLE_CLOUD_LOCATION: "us-central1",
         GOOGLE_APPLICATION_CREDENTIALS:

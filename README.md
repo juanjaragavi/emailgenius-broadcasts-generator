@@ -79,7 +79,7 @@ Una aplicación Next.js para generar broadcasts de email optimizados para Conver
    npm run dev
    ```
 
-7. Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
+7. Abre [http://localhost:3020](http://localhost:3020) en tu navegador.
 
 ## Configuración del Proyecto
 

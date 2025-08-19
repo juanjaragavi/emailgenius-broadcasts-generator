@@ -11,7 +11,7 @@ EmailGenius Broadcasts Generator is an AI-powered email broadcast creation tool 
 ### Core Next.js Commands
 
 ```bash
-# Development server (runs on port 3000)
+# Development server (runs on port 3020)
 npm run dev
 
 # Production build
@@ -505,7 +505,7 @@ gcloud auth application-default print-access-token
 gcloud services list --enabled --filter="name:aiplatform.googleapis.com"
 
 # Test credentials
-curl -X POST http://localhost:3000/api/generate-broadcast -H "Content-Type: application/json" -d '{"platform":"ConvertKit","emailType":"security-alert","market":"USA","imageType":"product-image"}'
+curl -X POST http://localhost:3020/api/generate-broadcast -H "Content-Type: application/json" -d '{"platform":"ConvertKit","emailType":"security-alert","market":"USA","imageType":"product-image"}'
 ```
 
 ### PM2 Service Management
@@ -541,7 +541,7 @@ npm run dev     # Start development server
 # Authentication verification
 echo $GOOGLE_APPLICATION_CREDENTIALS
 gcloud config get-value project
-````
+```
 
 ## Content Generation Examples
 
