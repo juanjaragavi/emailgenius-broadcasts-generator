@@ -4,7 +4,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-EmailGenius Broadcasts Generator is an AI-powered email broadcast creation tool that uses Google Cloud Vertex AI (Gemini 1.5 Pro) to generate high-engagement email campaigns optimized for both ConvertKit and ActiveCampaign platforms. The application specializes in creating financial product marketing emails that mimic transactional communications to maximize open rates and conversions.
+EmailGenius Broadcasts Generator is an AI-powered email broadcast creation tool that uses Google Cloud Vertex AI (Gemini 2.5 Flash) to generate high-engagement email campaigns optimized for both ConvertKit and ActiveCampaign platforms. The application specializes in creating financial product marketing emails that mimic transactional communications to maximize open rates and conversions.
 
 ## Production Environment Setup
 
