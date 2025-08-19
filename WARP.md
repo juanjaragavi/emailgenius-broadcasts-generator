@@ -268,8 +268,8 @@ sudo -u www-data git log --oneline -10
 ```markdown
 app/
 ├── api/
-│   ├── generate-broadcast/route.ts # Main AI API endpoint for email content generation
-│   └── generate-image/route.ts # Image generation endpoint using Vertex AI Imagen
+│ ├── generate-broadcast/route.ts # Main AI API endpoint for email content generation
+│ └── generate-image/route.ts # Image generation endpoint using Vertex AI Imagen
 ├── page.tsx # Main application with form handling, rich text copying, and image display
 ├── layout.tsx # App layout with Poppins font and gradient background
 └── globals.css # Global styles and Tailwind configuration
@@ -732,7 +732,8 @@ The application now includes automated AI-powered image generation using Google 
 
 #### API Endpoint (`/api/generate-image`)
 
-**POST /api/generate-image**
+#### POST /api/generate-image
+
 - Request: `{ imagePrompt: string }`
 - Response: `{ imageUrl: string, success: boolean }`
 - Error Codes:
@@ -741,7 +742,8 @@ The application now includes automated AI-powered image generation using Google 
   - 429: Quota exceeded
   - 500: Configuration error
 
-**GET /api/generate-image**
+#### GET /api/generate-image
+
 - Health check endpoint
 - Returns service configuration and authentication status
 
@@ -764,6 +766,7 @@ The application now includes automated AI-powered image generation using Google 
 ### Frontend Integration
 
 #### State Management
+
 ```typescript
 const [imageUrl, setImageUrl] = useState<string>("");
 const [imageLoading, setImageLoading] = useState(false);
@@ -834,16 +837,19 @@ sudo -u www-data pm2 logs emailgenius-broadcasts-generator --lines 50
 ### Image Generation Troubleshooting
 
 1. **Authentication Errors (401)**:
+
    - Verify Service Account email and private key in environment
    - Check PM2 ecosystem configuration
    - Ensure private key format includes newlines
 
 2. **Permission Denied (403)**:
+
    - Verify Service Account has Vertex AI User role
    - Check project IAM settings in GCP Console
    - Ensure Vertex AI API is enabled
 
 3. **Quota Exceeded (429)**:
+
    - Check Vertex AI quotas in GCP Console
    - Wait and retry after quota reset
    - Consider upgrading quota limits

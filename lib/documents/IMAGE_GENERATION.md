@@ -9,11 +9,13 @@ The EmailGenius Broadcasts Generator now includes automated AI-powered image gen
 ### Components
 
 1. **Vertex AI Service** (`lib/vertexai-imagen.ts`)
+
    - Handles authentication with GCP Service Account
    - Manages API calls to Vertex AI Imagen model
    - Returns base64-encoded images
 
 2. **API Endpoint** (`app/api/generate-image/route.ts`)
+
    - Processes image generation requests
    - Handles error management and status codes
    - Provides health check endpoint
@@ -46,11 +48,13 @@ The EmailGenius Broadcasts Generator now includes automated AI-powered image gen
 ### Step 2: Configure Environment Variables
 
 1. Copy `.env.local.example` to `.env.local`:
+
    ```bash
    cp .env.local.example .env.local
    ```
 
 2. Fill in the required values from your Service Account JSON key:
+
    ```env
    GOOGLE_CLOUD_PROJECT=your-project-id
    GOOGLE_CLOUD_LOCATION=us-central1
@@ -61,11 +65,13 @@ The EmailGenius Broadcasts Generator now includes automated AI-powered image gen
 ### Step 3: Install Dependencies
 
 The required dependencies should already be installed:
+
 ```bash
 npm install
 ```
 
 If needed, install manually:
+
 ```bash
 npm install google-auth-library
 ```
@@ -90,6 +96,7 @@ The application will run on `http://localhost:3020`
 ### Manual Generation
 
 If automatic generation fails or you want to regenerate:
+
 1. Click "Generar Imagen" button below the image preview
 2. Wait for the generation to complete
 3. Download the image using the "Descargar" button
@@ -108,6 +115,7 @@ If automatic generation fails or you want to regenerate:
 **POST** `/api/generate-image`
 
 #### Request Body
+
 ```json
 {
   "imagePrompt": "Generate an ultra-realistic image of..."
@@ -115,6 +123,7 @@ If automatic generation fails or you want to regenerate:
 ```
 
 #### Success Response
+
 ```json
 {
   "imageUrl": "data:image/png;base64,...",
@@ -123,6 +132,7 @@ If automatic generation fails or you want to regenerate:
 ```
 
 #### Error Response
+
 ```json
 {
   "error": "Error message",
@@ -135,6 +145,7 @@ If automatic generation fails or you want to regenerate:
 **GET** `/api/generate-image`
 
 #### Response
+
 ```json
 {
   "message": "Image Generation API is running",
@@ -154,16 +165,19 @@ If automatic generation fails or you want to regenerate:
 ### Common Errors and Solutions
 
 1. **Authentication Failed (401)**
+
    - Verify Service Account credentials in `.env.local`
    - Ensure private key format is correct
    - Check that service account email is valid
 
 2. **Permission Denied (403)**
+
    - Verify Service Account has Vertex AI permissions
    - Check project IAM settings
    - Ensure Vertex AI API is enabled
 
 3. **Quota Exceeded (429)**
+
    - Wait and retry later
    - Check GCP quotas and limits
    - Consider upgrading quota limits
@@ -205,9 +219,11 @@ The service uses the following parameters for optimal results:
 
 1. Check browser console for errors
 2. Verify API endpoint is accessible:
+
    ```bash
    curl http://localhost:3020/api/generate-image
    ```
+
 3. Check server logs for detailed error messages
 
 ### Poor Image Quality
@@ -219,9 +235,11 @@ The service uses the following parameters for optimal results:
 ### Authentication Issues
 
 1. Verify environment variables are loaded:
+
    ```javascript
-   console.log(process.env.GOOGLE_CLOUD_PROJECT)
+   console.log(process.env.GOOGLE_CLOUD_PROJECT);
    ```
+
 2. Test Service Account permissions in GCP Console
 3. Regenerate Service Account key if needed
 
@@ -245,6 +263,7 @@ The service uses the following parameters for optimal results:
 ## Support
 
 For issues or questions:
+
 1. Check this documentation
 2. Review error messages in browser console
 3. Check server logs for detailed errors
