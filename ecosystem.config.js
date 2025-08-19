@@ -43,9 +43,9 @@ module.exports = {
   deploy: {
     production: {
       user: "ubuntu",
-      host: "your-server-ip",
+      host: "34.45.27.247",
       ref: "origin/main",
-      repo: "https://github.com/your-username/emailgenius-broadcasts-generator.git",
+      repo: "https://github.com/juanjaragavi/emailgenius-broadcasts-generator.git",
       path: "/opt/emailgenius-broadcasts-generator",
       "pre-deploy-local": "",
       "post-deploy":
