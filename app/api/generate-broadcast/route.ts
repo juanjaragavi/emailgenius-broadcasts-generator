@@ -5,13 +5,16 @@ import { VertexAI } from "@google-cloud/vertexai";
 // This will try service account credentials first, then fall back to ADC
 let vertex: VertexAI;
 
-if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
+if (
+  process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
+  process.env.GOOGLE_PRIVATE_KEY
+) {
   // Use service account credentials from environment variables
   const credentials = {
     client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
     private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
   };
-  
+
   vertex = new VertexAI({
     project: process.env.GOOGLE_CLOUD_PROJECT || "",
     location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
@@ -29,7 +32,7 @@ if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) 
 
 // Get the generative model
 const model = vertex.getGenerativeModel({
-  model: "gemini-1.5-pro",
+  model: "gemini-2.5-flash",
 });
 
 // System prompt for email broadcast generation
