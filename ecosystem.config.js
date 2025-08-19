@@ -4,7 +4,7 @@ module.exports = {
       name: "emailgenius-broadcasts-generator",
       script: "npm",
       args: "start",
-      cwd: "/opt/emailgenius-broadcasts-generator",
+      cwd: "/var/www/html/emailgenius-broadcasts-generator",
       instances: 1,
       autorestart: true,
       watch: false,
@@ -25,9 +25,9 @@ module.exports = {
         GOOGLE_APPLICATION_CREDENTIALS:
           "/opt/emailgenius/credentials/service-account.json",
       },
-      error_file: "/var/log/pm2/emailgenius-error.log",
-      out_file: "/var/log/pm2/emailgenius-out.log",
-      log_file: "/var/log/pm2/emailgenius-combined.log",
+      error_file: "/var/log/pm2/emailgenius-broadcasts-error.log",
+      out_file: "/var/log/pm2/emailgenius-broadcasts-out.log",
+      log_file: "/var/log/pm2/emailgenius-broadcasts-combined.log",
       time: true,
       log_date_format: "YYYY-MM-DD HH:mm:ss Z",
       merge_logs: true,
@@ -42,11 +42,11 @@ module.exports = {
 
   deploy: {
     production: {
-      user: "ubuntu",
-      host: "34.45.27.247",
+      user: "www-data",
+      host: "localhost",
       ref: "origin/main",
       repo: "https://github.com/juanjaragavi/emailgenius-broadcasts-generator.git",
-      path: "/opt/emailgenius-broadcasts-generator",
+      path: "/var/www/html/emailgenius-broadcasts-generator",
       "pre-deploy-local": "",
       "post-deploy":
         "npm install && npm run build && pm2 reload ecosystem.config.js --env production",
