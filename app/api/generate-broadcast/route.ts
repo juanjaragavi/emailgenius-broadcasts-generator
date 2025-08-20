@@ -66,7 +66,7 @@ You will adhere to user guidelines and draw inspiration from provided context, s
 
 Generate a realistic destination URL with proper UTM parameters for tracking:
 
-- **URL Structure:** https://example.com/[relevant-path]?utm_campaign=[country_code]_tf_[platform]_broad&utm_source=[platform]&utm_medium=email&utm_term=broadcast
+- **URL Structure:** https://example.com/[relevant-path]?utm_campaign=[country_code]_tf_[platform]_broad&utm_source=[platform]&utm_medium=email&utm_term=broadcast&utm_content=boton_1
 - **UTM Campaign Format:** [country_code]_[brand]_[platform]_[type]
   - **country_code**: Two-letter country identifier (us, mx, uk)
   - **brand**: Brand abbreviation (tf)
@@ -74,10 +74,10 @@ Generate a realistic destination URL with proper UTM parameters for tracking:
   - **type**: Campaign type (broad for broadcast)
 - **Platform-specific UTM source:** Use "activecampaign" for ActiveCampaign campaigns, "convertkit" for ConvertKit campaigns
 - **UTM Examples:**
-  - ActiveCampaign USA: utm_campaign=us_tf_ac_broad&utm_source=activecampaign&utm_medium=email&utm_term=broadcast
-  - ConvertKit USA: utm_campaign=us_tf_kit_broad&utm_source=convertkit&utm_medium=email&utm_term=broadcast
-  - ConvertKit Mexico: utm_campaign=mx_tf_kit_broad&utm_source=convertkit&utm_medium=email&utm_term=broadcast
-  - ConvertKit UK: utm_campaign=uk_tf_kit_broad&utm_source=convertkit&utm_medium=email&utm_term=broadcast
+  - ActiveCampaign USA: utm_campaign=us_tf_ac_broad&utm_source=activecampaign&utm_medium=email&utm_term=broadcast&utm_content=boton_1
+  - ConvertKit USA: utm_campaign=us_tf_kit_broad&utm_source=convertkit&utm_medium=email&utm_term=broadcast&utm_content=boton_1
+  - ConvertKit Mexico: utm_campaign=mx_tf_kit_broad&utm_source=convertkit&utm_medium=email&utm_term=broadcast&utm_content=boton_1
+  - ConvertKit UK: utm_campaign=uk_tf_kit_broad&utm_source=convertkit&utm_medium=email&utm_term=broadcast&utm_content=boton_1
 - **Path examples:** /card-tracking, /verify-account, /security-alert, /delivery-status, /credit-limit, /loan-status
 - The URL should be relevant to the email content and CTA action
 
@@ -103,7 +103,7 @@ For ConvertKit:
   "previewText": "Preview text under 150 characters",
   "emailBody": "Email body with {{ subscriber.first_name }} variable and formatted content",
   "ctaButtonText": "ACTION BUTTON TEXT",
-  "destinationUrl": "https://example.com/offer?utm_source=convertkit&utm_medium=email&utm_campaign=us_tf_kit_broad&utm_term=broadcast",
+  "destinationUrl": "https://example.com/offer?utm_source=convertkit&utm_medium=email&utm_campaign=us_tf_kit_broad&utm_term=broadcast&utm_content=boton_1",
   "imagePrompt": "Generate an... prompt ending with Generate the image with a 16:9 aspect ratio."
 }
 
@@ -115,7 +115,7 @@ For ActiveCampaign:
   "fromEmail": "email@domain.com",
   "emailBody": "Email body with %FIRSTNAME% variable and formatted content",
   "ctaButtonText": "ACTION BUTTON TEXT",
-  "destinationUrl": "https://example.com/offer?utm_source=activecampaign&utm_medium=email&utm_campaign=us_tf_ac_broad&utm_term=broadcast",
+  "destinationUrl": "https://example.com/offer?utm_source=activecampaign&utm_medium=email&utm_campaign=us_tf_ac_broad&utm_term=broadcast&utm_content=boton_1",
   "imagePrompt": "Generate an... prompt ending with Generate the image with a 16:9 aspect ratio."
 }
 

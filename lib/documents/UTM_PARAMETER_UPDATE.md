@@ -30,6 +30,7 @@ utm_source=[platform_name]
 utm_medium=email
 utm_campaign=[country_code]_tf_[platform]_broad
 utm_term=broadcast
+utm_content=boton_1
 ```
 
 ## Examples
@@ -49,6 +50,26 @@ utm_term=broadcast
 - **ActiveCampaign:** `utm_campaign=uk_tf_ac_broad`
 - **ConvertKit:** `utm_campaign=uk_tf_kit_broad`
 
+### Complete URL Examples with All UTM Parameters
+
+#### ActiveCampaign USA
+
+```BASH
+https://example.com/offer?utm_source=activecampaign&utm_medium=email&utm_campaign=us_tf_ac_broad&utm_term=broadcast&utm_content=boton_1
+```
+
+#### ConvertKit Mexico
+
+```BASH
+https://example.com/offer?utm_source=convertkit&utm_medium=email&utm_campaign=mx_tf_kit_broad&utm_term=broadcast&utm_content=boton_1
+```
+
+#### ConvertKit UK
+
+```BASH
+https://example.com/offer?utm_source=convertkit&utm_medium=email&utm_campaign=uk_tf_kit_broad&utm_term=broadcast&utm_content=boton_1
+
+
 ## Implementation Details
 
 ### Files Updated
@@ -61,6 +82,7 @@ utm_term=broadcast
 2. Added comprehensive examples for all platform/market combinations
 3. Updated example destination URLs in output formatting section
 4. Added `utm_term=broadcast` parameter for additional categorization
+5. Added `utm_content=boton_1` parameter for CTA button tracking
 
 ## Benefits
 
@@ -80,3 +102,4 @@ utm_term=broadcast
 1. Test generated emails to verify correct UTM parameter application
 2. Validate URLs with new structure across different markets and platforms
 3. Monitor analytics to ensure proper tracking implementation
+```
