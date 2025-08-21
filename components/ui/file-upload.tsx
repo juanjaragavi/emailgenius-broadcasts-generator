@@ -60,6 +60,13 @@ export function FileUpload({
     return name.endsWith(".md") ? name : `${name}.md`;
   };
 
+  // Handle filename input without automatic extension display
+  const handleFilenameChange = (value: string) => {
+    // Remove .md extension if user types it, we'll add it automatically on upload
+    const cleanValue = value.replace(/\.md$/i, "");
+    setFilename(cleanValue);
+  };
+
   const handleUpload = async () => {
     setIsUploading(true);
     setError(null);
@@ -139,16 +146,21 @@ export function FileUpload({
           <Label htmlFor="filename">
             Nombre del Archivo de Entrenamiento *
           </Label>
-          <Input
-            id="filename"
-            value={filename}
-            onChange={(e) => setFilename(e.target.value)}
-            placeholder="ej: ejemplos-asuntos-exitosos-agosto-2025"
-            disabled={isUploading}
-            className="border-lime-200 focus:border-lime-400 focus:ring-lime-400"
-          />
+          <div className="relative">
+            <Input
+              id="filename"
+              value={filename}
+              onChange={(e) => handleFilenameChange(e.target.value)}
+              placeholder="ej: ejemplos-asuntos-exitosos-agosto-2025"
+              disabled={isUploading}
+              className="border-lime-200 focus:border-lime-400 focus:ring-lime-400 pr-12"
+            />
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
+              .md
+            </div>
+          </div>
           <p className="text-xs text-gray-500">
-            El archivo se guardará automáticamente como .md
+            💾 La extensión .md se añadirá automáticamente al archivo
           </p>
         </div>
 

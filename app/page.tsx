@@ -33,6 +33,7 @@ import { marked } from "marked";
 import Image from "next/image";
 import { FileUpload } from "@/components/ui/file-upload";
 import { PngUpload } from "@/components/ui/png-upload";
+import { Header } from "@/components/ui/header";
 
 interface FormData {
   platform: "ActiveCampaign" | "ConvertKit";
@@ -351,510 +352,493 @@ export default function Home() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="flex items-center gap-2">
-              <Image
-                src="https://storage.googleapis.com/media-topfinanzas-com/images/topnetworks-positivo-sinfondo.webp"
-                alt="TopNetworks Logo"
-                width={350}
-                height={110}
-                className="h-20 w-auto"
-                priority
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Mail className="h-8 w-8 text-lime-600" />
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent">
-                EmailGenius
-              </h1>
-              <Sparkles className="h-8 w-8 text-cyan-500" />
-            </div>
-          </div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent mb-2">
-            Generador de Broadcasts de Email
-          </h2>
-          <p className="text-lg text-gray-700 font-medium">
-            Plataforma Profesional de Marketing por Email
-          </p>
-          <p className="text-sm text-gray-600 mt-2">
-            Crea broadcasts altamente efectivos para ConvertKit y ActiveCampaign
-          </p>
-        </div>
+    <>
+      <Header />
+      <div className="container mx-auto py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          {/* Main Email Generator Section */}
+          <section id="generador" className="scroll-mt-24">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Form */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Configuración del Broadcast</CardTitle>
+                  <CardDescription>
+                    Completa los campos para generar tu broadcast personalizado
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    {/* Platform */}
+                    <div className="space-y-2">
+                      <Label htmlFor="platform">Plataforma *</Label>
+                      <Select
+                        onValueChange={(value) =>
+                          setValue("platform", value as FormData["platform"])
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona la plataforma" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ConvertKit">ConvertKit</SelectItem>
+                          <SelectItem value="ActiveCampaign">
+                            ActiveCampaign
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Configuración del Broadcast</CardTitle>
-              <CardDescription>
-                Completa los campos para generar tu broadcast personalizado
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* Platform */}
-                <div className="space-y-2">
-                  <Label htmlFor="platform">Plataforma *</Label>
-                  <Select
-                    onValueChange={(value) =>
-                      setValue("platform", value as FormData["platform"])
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona la plataforma" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ConvertKit">ConvertKit</SelectItem>
-                      <SelectItem value="ActiveCampaign">
-                        ActiveCampaign
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    {/* Email Type */}
+                    <div className="space-y-2">
+                      <Label htmlFor="emailType">Tipo de Email *</Label>
+                      <Select
+                        onValueChange={(value) => setValue("emailType", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona el tipo de email" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="security-alert">
+                            Alerta de Seguridad
+                          </SelectItem>
+                          <SelectItem value="shipping-update">
+                            Actualización de Envío
+                          </SelectItem>
+                          <SelectItem value="account-status">
+                            Estado de Cuenta
+                          </SelectItem>
+                          <SelectItem value="product">
+                            Producto Financiero
+                          </SelectItem>
+                          <SelectItem value="urgent-communication">
+                            Comunicación Urgente
+                          </SelectItem>
+                          <SelectItem value="status-update">
+                            Actualización de Estado
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                {/* Email Type */}
-                <div className="space-y-2">
-                  <Label htmlFor="emailType">Tipo de Email *</Label>
-                  <Select
-                    onValueChange={(value) => setValue("emailType", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona el tipo de email" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="security-alert">
-                        Alerta de Seguridad
-                      </SelectItem>
-                      <SelectItem value="shipping-update">
-                        Actualización de Envío
-                      </SelectItem>
-                      <SelectItem value="account-status">
-                        Estado de Cuenta
-                      </SelectItem>
-                      <SelectItem value="product">
-                        Producto Financiero
-                      </SelectItem>
-                      <SelectItem value="urgent-communication">
-                        Comunicación Urgente
-                      </SelectItem>
-                      <SelectItem value="status-update">
-                        Actualización de Estado
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    {/* Market */}
+                    <div className="space-y-2">
+                      <Label htmlFor="market">Mercado *</Label>
+                      <Select
+                        onValueChange={(value) =>
+                          setValue("market", value as FormData["market"])
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona el mercado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="USA">
+                            Estados Unidos (Inglés)
+                          </SelectItem>
+                          <SelectItem value="UK">
+                            Reino Unido (Inglés)
+                          </SelectItem>
+                          <SelectItem value="Mexico">
+                            México (Español)
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                {/* Market */}
-                <div className="space-y-2">
-                  <Label htmlFor="market">Mercado *</Label>
-                  <Select
-                    onValueChange={(value) =>
-                      setValue("market", value as FormData["market"])
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona el mercado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USA">
-                        Estados Unidos (Inglés)
-                      </SelectItem>
-                      <SelectItem value="UK">Reino Unido (Inglés)</SelectItem>
-                      <SelectItem value="Mexico">México (Español)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    {/* Image Type */}
+                    <div className="space-y-2">
+                      <Label htmlFor="imageType">Tipo de Imagen *</Label>
+                      <Select
+                        onValueChange={(value) => setValue("imageType", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona el tipo de imagen" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="product-image">
+                            Imagen del Producto
+                          </SelectItem>
+                          <SelectItem value="lifestyle-photo">
+                            Foto de Estilo de Vida
+                          </SelectItem>
+                          <SelectItem value="infographic">
+                            Infografía
+                          </SelectItem>
+                          <SelectItem value="icon">Icono</SelectItem>
+                          <SelectItem value="animated-gif">
+                            GIF Animado
+                          </SelectItem>
+                          <SelectItem value="shipment-tracking">
+                            Seguimiento de Envío
+                          </SelectItem>
+                          <SelectItem value="graphic">Gráfico</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                {/* Image Type */}
-                <div className="space-y-2">
-                  <Label htmlFor="imageType">Tipo de Imagen *</Label>
-                  <Select
-                    onValueChange={(value) => setValue("imageType", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona el tipo de imagen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="product-image">
-                        Imagen del Producto
-                      </SelectItem>
-                      <SelectItem value="lifestyle-photo">
-                        Foto de Estilo de Vida
-                      </SelectItem>
-                      <SelectItem value="infographic">Infografía</SelectItem>
-                      <SelectItem value="icon">Icono</SelectItem>
-                      <SelectItem value="animated-gif">GIF Animado</SelectItem>
-                      <SelectItem value="shipment-tracking">
-                        Seguimiento de Envío
-                      </SelectItem>
-                      <SelectItem value="graphic">Gráfico</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    {/* URL */}
+                    <div className="space-y-2">
+                      <Label htmlFor="url">URL de Referencia (Opcional)</Label>
+                      <Input
+                        id="url"
+                        type="url"
+                        placeholder="https://ejemplo.com"
+                        {...register("url")}
+                      />
+                    </div>
 
-                {/* URL */}
-                <div className="space-y-2">
-                  <Label htmlFor="url">URL de Referencia (Opcional)</Label>
-                  <Input
-                    id="url"
-                    type="url"
-                    placeholder="https://ejemplo.com"
-                    {...register("url")}
-                  />
-                </div>
-
-                {/* Additional Instructions */}
-                <div className="space-y-2">
-                  <Label htmlFor="additionalInstructions">
-                    Instrucciones Adicionales (Opcional)
-                  </Label>
-                  <Textarea
-                    id="additionalInstructions"
-                    placeholder="Proporciona cualquier instrucción específica para el broadcast..."
-                    rows={3}
-                    {...register("additionalInstructions")}
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-medium transition-all duration-200"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generando Broadcast...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      Generar Broadcast
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Results */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Resultado del Broadcast</CardTitle>
-              <CardDescription>
-                Tu broadcast generado aparecerá aquí
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading && (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                  <span className="ml-2 text-gray-600">
-                    Generando tu broadcast...
-                  </span>
-                </div>
-              )}
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                  <p className="text-red-600 text-sm">{error}</p>
-                </div>
-              )}
-
-              {/* Watermark - only visible on desktop when no result and not loading */}
-              {!result && !isLoading && !error && (
-                <div className="hidden lg:flex items-center justify-center py-24 relative">
-                  <div className="relative">
-                    <Image
-                      src="https://storage.googleapis.com/media-topfinanzas-com/favicon.png"
-                      alt="TopNetworks Watermark"
-                      width={200}
-                      height={200}
-                      className="opacity-20 grayscale select-none pointer-events-none"
-                      draggable={false}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/30 to-white/40 rounded-full"></div>
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <p className="text-gray-400 text-lg font-medium opacity-60 select-none">
-                      Tu broadcast aparecerá aquí
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {result && (
-                <div className="space-y-6">
-                  {platform === "ConvertKit" ? (
-                    <>
-                      {result.subjectLine1 && (
-                        <FieldWithCopy
-                          label="Línea de Asunto A/B Test 1:"
-                          content={result.subjectLine1}
-                          fieldName="subjectLine1"
-                        />
-                      )}
-
-                      {result.subjectLine2 && (
-                        <FieldWithCopy
-                          label="Línea de Asunto A/B Test 2:"
-                          content={result.subjectLine2}
-                          fieldName="subjectLine2"
-                        />
-                      )}
-
-                      {result.previewText && (
-                        <FieldWithCopy
-                          label="Texto de Vista Previa:"
-                          content={result.previewText}
-                          fieldName="previewText"
-                        />
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {result.subjectLine1 && (
-                        <FieldWithCopy
-                          label="Línea de Asunto:"
-                          content={result.subjectLine1}
-                          fieldName="subjectLine1"
-                        />
-                      )}
-
-                      {result.previewText && (
-                        <FieldWithCopy
-                          label="Preheader:"
-                          content={result.previewText}
-                          fieldName="previewText"
-                        />
-                      )}
-
-                      {result.fromName && (
-                        <FieldWithCopy
-                          label="Nombre del Remitente:"
-                          content={result.fromName}
-                          fieldName="fromName"
-                        />
-                      )}
-
-                      {result.fromEmail && (
-                        <FieldWithCopy
-                          label="Email del Remitente:"
-                          content={result.fromEmail}
-                          fieldName="fromEmail"
-                        />
-                      )}
-                    </>
-                  )}
-
-                  <FieldWithCopy
-                    label="Cuerpo del Email:"
-                    content={result.emailBody}
-                    fieldName="emailBody"
-                  />
-
-                  <FieldWithCopy
-                    label="Texto del Botón CTA:"
-                    content={result.ctaButtonText}
-                    fieldName="ctaButtonText"
-                    className="text-sm font-medium text-blue-600"
-                  />
-
-                  {result.destinationUrl && (
-                    <FieldWithCopy
-                      label="URL de Destino con Parámetros UTM:"
-                      content={result.destinationUrl}
-                      fieldName="destinationUrl"
-                      className="text-xs font-mono text-blue-600"
-                    />
-                  )}
-
-                  <FieldWithCopy
-                    label="Prompt para Generación de Imagen:"
-                    content={result.imagePrompt}
-                    fieldName="imagePrompt"
-                  />
-
-                  {/* Image Generation Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium text-gray-700">
-                        Imagen Generada por IA
+                    {/* Additional Instructions */}
+                    <div className="space-y-2">
+                      <Label htmlFor="additionalInstructions">
+                        Instrucciones Adicionales (Opcional)
                       </Label>
-                      {imageUrl && (
-                        <Button
-                          onClick={downloadImage}
-                          variant="outline"
-                          size="sm"
-                          className="h-8 px-2 text-xs"
-                        >
-                          <Download className="h-3 w-3 mr-1" />
-                          Descargar
-                        </Button>
-                      )}
+                      <Textarea
+                        id="additionalInstructions"
+                        placeholder="Proporciona cualquier instrucción específica para el broadcast..."
+                        rows={3}
+                        {...register("additionalInstructions")}
+                      />
                     </div>
 
-                    <div className="relative min-h-[200px] bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200 overflow-hidden">
-                      {imageLoading && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
-                          <span className="text-sm text-gray-600">
-                            Generando imagen...
-                          </span>
-                        </div>
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-medium transition-all duration-200"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generando Broadcast...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="mr-2 h-4 w-4" />
+                          Generar Broadcast
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* Results */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Resultado del Broadcast</CardTitle>
+                  <CardDescription>
+                    Tu broadcast generado aparecerá aquí
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isLoading && (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                      <span className="ml-2 text-gray-600">
+                        Generando tu broadcast...
+                      </span>
+                    </div>
+                  )}
+
+                  {error && (
+                    <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                      <p className="text-red-600 text-sm">{error}</p>
+                    </div>
+                  )}
+
+                  {/* Watermark - only visible on desktop when no result and not loading */}
+                  {!result && !isLoading && !error && (
+                    <div className="hidden lg:flex items-center justify-center py-24 relative">
+                      <div className="relative">
+                        <Image
+                          src="https://storage.googleapis.com/media-topfinanzas-com/favicon.png"
+                          alt="TopNetworks Watermark"
+                          width={200}
+                          height={200}
+                          className="opacity-20 grayscale select-none pointer-events-none"
+                          draggable={false}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/30 to-white/40 rounded-full"></div>
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <p className="text-gray-400 text-lg font-medium opacity-60 select-none">
+                          Tu broadcast aparecerá aquí
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {result && (
+                    <div className="space-y-6">
+                      {platform === "ConvertKit" ? (
+                        <>
+                          {result.subjectLine1 && (
+                            <FieldWithCopy
+                              label="Línea de Asunto A/B Test 1:"
+                              content={result.subjectLine1}
+                              fieldName="subjectLine1"
+                            />
+                          )}
+
+                          {result.subjectLine2 && (
+                            <FieldWithCopy
+                              label="Línea de Asunto A/B Test 2:"
+                              content={result.subjectLine2}
+                              fieldName="subjectLine2"
+                            />
+                          )}
+
+                          {result.previewText && (
+                            <FieldWithCopy
+                              label="Texto de Vista Previa:"
+                              content={result.previewText}
+                              fieldName="previewText"
+                            />
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {result.subjectLine1 && (
+                            <FieldWithCopy
+                              label="Línea de Asunto:"
+                              content={result.subjectLine1}
+                              fieldName="subjectLine1"
+                            />
+                          )}
+
+                          {result.previewText && (
+                            <FieldWithCopy
+                              label="Preheader:"
+                              content={result.previewText}
+                              fieldName="previewText"
+                            />
+                          )}
+
+                          {result.fromName && (
+                            <FieldWithCopy
+                              label="Nombre del Remitente:"
+                              content={result.fromName}
+                              fieldName="fromName"
+                            />
+                          )}
+
+                          {result.fromEmail && (
+                            <FieldWithCopy
+                              label="Email del Remitente:"
+                              content={result.fromEmail}
+                              fieldName="fromEmail"
+                            />
+                          )}
+                        </>
                       )}
 
-                      {imageError && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                          <ImageIcon className="h-8 w-8 text-red-400 mb-2" />
-                          <p className="text-sm text-red-600 text-center">
-                            {imageError}
-                          </p>
+                      <FieldWithCopy
+                        label="Cuerpo del Email:"
+                        content={result.emailBody}
+                        fieldName="emailBody"
+                      />
+
+                      <FieldWithCopy
+                        label="Texto del Botón CTA:"
+                        content={result.ctaButtonText}
+                        fieldName="ctaButtonText"
+                        className="text-sm font-medium text-blue-600"
+                      />
+
+                      {result.destinationUrl && (
+                        <FieldWithCopy
+                          label="URL de Destino con Parámetros UTM:"
+                          content={result.destinationUrl}
+                          fieldName="destinationUrl"
+                          className="text-xs font-mono text-blue-600"
+                        />
+                      )}
+
+                      <FieldWithCopy
+                        label="Prompt para Generación de Imagen:"
+                        content={result.imagePrompt}
+                        fieldName="imagePrompt"
+                      />
+
+                      {/* Image Generation Section */}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium text-gray-700">
+                            Imagen Generada por IA
+                          </Label>
+                          {imageUrl && (
+                            <Button
+                              onClick={downloadImage}
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-2 text-xs"
+                            >
+                              <Download className="h-3 w-3 mr-1" />
+                              Descargar
+                            </Button>
+                          )}
+                        </div>
+
+                        <div className="relative min-h-[200px] bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200 overflow-hidden">
+                          {imageLoading && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                              <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
+                              <span className="text-sm text-gray-600">
+                                Generando imagen...
+                              </span>
+                            </div>
+                          )}
+
+                          {imageError && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                              <ImageIcon className="h-8 w-8 text-red-400 mb-2" />
+                              <p className="text-sm text-red-600 text-center">
+                                {imageError}
+                              </p>
+                              <Button
+                                onClick={() =>
+                                  result?.imagePrompt &&
+                                  generateImage(result.imagePrompt)
+                                }
+                                variant="outline"
+                                size="sm"
+                                className="mt-2"
+                              >
+                                Reintentar
+                              </Button>
+                            </div>
+                          )}
+
+                          {imageUrl && !imageLoading && (
+                            <div className="relative w-full h-full">
+                              {/* Use Next.js Image for optimized loading */}
+                              <Image
+                                src={imageUrl}
+                                alt="Generated email header image"
+                                width={800}
+                                height={300}
+                                className="w-full h-auto object-cover rounded-lg"
+                                style={{ objectFit: "cover" }}
+                                priority
+                                unoptimized={imageUrl.startsWith("data:")}
+                              />
+                            </div>
+                          )}
+
+                          {!imageUrl && !imageLoading && !imageError && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                              <ImageIcon className="h-8 w-8 text-gray-400 mb-2" />
+                              <p className="text-sm text-gray-500">
+                                La imagen aparecerá aquí
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {!imageUrl && !imageLoading && result?.imagePrompt && (
                           <Button
-                            onClick={() =>
-                              result?.imagePrompt &&
-                              generateImage(result.imagePrompt)
-                            }
+                            onClick={() => generateImage(result.imagePrompt)}
                             variant="outline"
-                            size="sm"
-                            className="mt-2"
+                            className="w-full"
                           >
-                            Reintentar
+                            <ImageIcon className="h-4 w-4 mr-2" />
+                            Generar Imagen
                           </Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
 
-                      {imageUrl && !imageLoading && (
-                        <div className="relative w-full h-full">
-                          {/* Use Next.js Image for optimized loading */}
-                          <Image
-                            src={imageUrl}
-                            alt="Generated email header image"
-                            width={800}
-                            height={300}
-                            className="w-full h-auto object-cover rounded-lg"
-                            style={{ objectFit: "cover" }}
-                            priority
-                            unoptimized={imageUrl.startsWith("data:")}
-                          />
-                        </div>
-                      )}
-
-                      {!imageUrl && !imageLoading && !imageError && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <ImageIcon className="h-8 w-8 text-gray-400 mb-2" />
-                          <p className="text-sm text-gray-500">
-                            La imagen aparecerá aquí
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {!imageUrl && !imageLoading && result?.imagePrompt && (
                       <Button
-                        onClick={() => generateImage(result.imagePrompt)}
+                        onClick={() => {
+                          const textToCopy = Object.entries(result)
+                            .filter(([, value]) => value)
+                            .map(([key, value]) => `${key}: ${value}`)
+                            .join("\n\n");
+                          navigator.clipboard.writeText(textToCopy);
+                        }}
                         variant="outline"
                         className="w-full"
                       >
-                        <ImageIcon className="h-4 w-4 mr-2" />
-                        Generar Imagen
+                        Copiar Todo al Portapapeles
                       </Button>
-                    )}
-                  </div>
 
-                  <Button
-                    onClick={() => {
-                      const textToCopy = Object.entries(result)
-                        .filter(([, value]) => value)
-                        .map(([key, value]) => `${key}: ${value}`)
-                        .join("\n\n");
-                      navigator.clipboard.writeText(textToCopy);
-                    }}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Copiar Todo al Portapapeles
-                  </Button>
+                      {/* Reset Buttons */}
+                      <div className="flex gap-3 pt-4">
+                        <Button
+                          onClick={handleReset}
+                          variant="outline"
+                          className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                        >
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Generar Broadcast Nuevo
+                        </Button>
 
-                  {/* Reset Buttons */}
-                  <div className="flex gap-3 pt-4">
-                    <Button
-                      onClick={handleReset}
-                      variant="outline"
-                      className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
-                    >
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      Generar Broadcast Nuevo
-                    </Button>
+                        <Button
+                          onClick={handleReset}
+                          variant="outline"
+                          className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
+                        >
+                          <Mail className="h-4 w-4 mr-2" />
+                          Borrar Todo
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </section>
 
-                    <Button
-                      onClick={handleReset}
-                      variant="outline"
-                      className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
-                    >
-                      <Mail className="h-4 w-4 mr-2" />
-                      Borrar Todo
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+          {/* File Upload Section */}
+          <section id="entrenar-asuntos" className="scroll-mt-24 mt-16">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent mb-2">
+                Entrenar IA con Asuntos Exitosos
+              </h3>
+              <p className="text-gray-600">
+                Enseña a nuestro agente de IA con ejemplos de asuntos que han
+                generado altas tasas de apertura y clics
+              </p>
+            </div>
+            <div className="flex justify-center">
+              <FileUpload
+                onUploadSuccess={(result) => {
+                  console.log("Upload successful:", result);
+                  // You can add additional success handling here
+                }}
+                onUploadError={(error) => {
+                  console.error("Upload error:", error);
+                  // You can add additional error handling here
+                }}
+              />
+            </div>
+          </section>
 
-        {/* File Upload Section */}
-        <div className="mt-12">
-          <div className="text-center mb-6">
-            <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent mb-2">
-              Entrenar IA con Asuntos Exitosos
-            </h3>
-            <p className="text-gray-600">
-              Enseña a nuestro agente de IA con ejemplos de asuntos que han
-              generado altas tasas de apertura y clics
-            </p>
-          </div>
-          <div className="flex justify-center">
-            <FileUpload
-              onUploadSuccess={(result) => {
-                console.log("Upload successful:", result);
-                // You can add additional success handling here
-              }}
-              onUploadError={(error) => {
-                console.error("Upload error:", error);
-                // You can add additional error handling here
-              }}
-            />
-          </div>
-        </div>
-
-        {/* PNG Image Upload Section */}
-        <div className="mt-12">
-          <div className="text-center mb-6">
-            <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent mb-2">
-              Entrenar IA con Ejemplos Visuales
-            </h3>
-            <p className="text-gray-600">
-              Alimenta al agente de IA con capturas de emails exitosos para
-              mejorar sus recomendaciones de diseño
-            </p>
-          </div>
-          <div className="flex justify-center">
-            <PngUpload
-              onUploadSuccess={(result) => {
-                console.log("PNG Upload successful:", result);
-                // You can add additional success handling here
-              }}
-              onUploadError={(error) => {
-                console.error("PNG Upload error:", error);
-                // You can add additional error handling here
-              }}
-            />
-          </div>
+          {/* PNG Image Upload Section */}
+          <section id="entrenar-imagenes" className="scroll-mt-24 mt-16">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent mb-2">
+                Entrenar IA con Ejemplos Visuales
+              </h3>
+              <p className="text-gray-600">
+                Alimenta al agente de IA con capturas de emails exitosos para
+                mejorar sus recomendaciones de diseño
+              </p>
+            </div>
+            <div className="flex justify-center">
+              <PngUpload
+                onUploadSuccess={(result) => {
+                  console.log("PNG Upload successful:", result);
+                  // You can add additional success handling here
+                }}
+                onUploadError={(error) => {
+                  console.error("PNG Upload error:", error);
+                  // You can add additional error handling here
+                }}
+              />
+            </div>
+          </section>
         </div>
       </div>
-    </div>
+    </>
   );
 }

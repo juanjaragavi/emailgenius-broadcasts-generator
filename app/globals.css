@@ -74,6 +74,15 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Scroll margin for fixed header */
+  .scroll-mt-24 {
+    scroll-margin-top: 6rem;
+  }
 }
 
 /* Custom utility for URL wrapping */

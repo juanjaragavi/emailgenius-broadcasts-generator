@@ -48,6 +48,13 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
     return trimmed.toLowerCase().endsWith(".png") ? trimmed : `${trimmed}.png`;
   };
 
+  // Handle filename input without automatic extension display
+  const handleFilenameChange = (value: string) => {
+    // Remove .png extension if user types it, we'll add it automatically on upload
+    const cleanValue = value.replace(/\.png$/i, "");
+    setFilename(cleanValue);
+  };
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -72,7 +79,7 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
     // Auto-populate filename if empty
     if (!filename) {
       const name = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
-      setFilename(name);
+      handleFilenameChange(name);
     }
   };
 
@@ -197,17 +204,21 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
         {/* Filename Input */}
         <div className="space-y-2">
           <Label htmlFor="filename">Nombre Descriptivo del Ejemplo *</Label>
-          <Input
-            id="filename"
-            value={filename}
-            onChange={(e) => setFilename(e.target.value)}
-            placeholder="ej: email-promocional-alto-ctr-agosto-2025"
-            disabled={isUploading}
-            className="border-lime-200 focus:border-lime-400 focus:ring-lime-400"
-          />
+          <div className="relative">
+            <Input
+              id="filename"
+              value={filename}
+              onChange={(e) => handleFilenameChange(e.target.value)}
+              placeholder="ej: email-promocional-alto-ctr-agosto-2025"
+              disabled={isUploading}
+              className="border-lime-200 focus:border-lime-400 focus:ring-lime-400 pr-14"
+            />
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
+              .png
+            </div>
+          </div>
           <p className="text-xs text-gray-500">
-            💡 Describe el tipo de email y su efectividad (ej:
-            &quot;notificacion-envio-exitosa&quot;)
+            🖼️ La extensión .png se añadirá automáticamente al archivo
           </p>
         </div>
 
