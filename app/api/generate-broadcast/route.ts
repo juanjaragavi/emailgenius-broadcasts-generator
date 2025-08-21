@@ -83,14 +83,59 @@ Generate a realistic destination URL with proper UTM parameters for tracking:
 
 ### Image Generation Prompt
 
-Based on the email content and user inputs, create a single, detailed prompt for an image generation Large Language Model (LLM) to generate an ultra-realistic stock image.
+Based on the email content and user inputs, create a single, detailed prompt for an image generation Large Language Model (LLM) to generate an ultra-realistic stock image that matches the specified Image Type.
 
-- The prompt must start with "Generate an..." and end with "Generate the image with a 16:9 aspect ratio.".
-- The image should be mobile-optimized and have a horizontal (16:9) aspect ratio.
-- The visual elements in the prompt should be relevant to the financial product, email theme, and target market (e.g., credit cards, loan documents, people interacting with financial tools).
-- Ensure the prompt describes a scene where the key text and primary action would be clearly visible on a mobile screen.
-- Adapt the image style (e.g., vivid and colorful, or professional and clean) to match the email's tone.
-- Ensure diversity and inclusivity in any depiction of people.
+**CRITICAL: The image prompt MUST align with the selected Image Type from the user input. Adapt the content, style, and visual elements according to the specific type selected.**
+
+#### Image Type Guidelines:
+
+**product-image:** Focus on showcasing the financial product itself (e.g., credit card, debit card, loan documents). Use clean, professional photography with proper lighting. Show the product prominently with minimal background distractions. Include realistic card designs, document layouts, or financial instruments.
+
+**lifestyle-photo:** Create scenes showing people using or benefiting from financial services. Include diverse individuals in realistic scenarios (shopping, using ATMs, managing finances on devices, family financial planning, online banking). Focus on emotional connection and relatability with warm, engaging compositions.
+
+**infographic:** Design clean, data-driven visuals with charts, graphs, statistics, or step-by-step processes. Use modern design elements, clear typography, and visual hierarchy. Focus on conveying financial information quickly and clearly (interest rates, benefits, timelines, comparison charts).
+
+**icon:** Create simple, recognizable symbols or pictograms related to the financial theme (security shields, dollar signs, credit card icons, bank symbols, checkmarks, locks, percentage signs). Use clean lines, solid colors, and minimalist design with strong visual impact.
+
+**animated-gif:** Describe a subtle animation concept that would enhance engagement (progress bars filling, loading sequences, card flipping, notification alerts appearing, money counters, approval checkmarks animating). Focus on movement that draws attention without being distracting.
+
+**shipment-tracking:** Visualize package delivery, tracking interfaces, delivery trucks, progress indicators, or shipping-related imagery. Include elements like tracking numbers, delivery status, courier services, packages in transit, or delivery confirmation screens.
+
+**graphic:** Design custom illustrations, abstract designs, or branded graphics that complement the email theme. Use modern design elements, brand-appropriate colors, and engaging visual compositions. Include geometric patterns, financial symbols, or conceptual illustrations.
+
+#### Universal Requirements:
+- The prompt must start with "Generate an..." and end with "Generate the image with a 16:9 aspect ratio."
+- The image should be mobile-optimized and have a horizontal (16:9) aspect ratio
+- Visual elements should be relevant to the financial product, email theme, and target market
+- Ensure the scene is clearly visible and impactful on mobile screens
+- Adapt the image style (vivid/colorful or professional/clean) to match the email's tone
+- Ensure diversity and inclusivity in any depiction of people
+- Make the primary visual element prominent and easily recognizable
+
+### ActiveCampaign and ConvertKIT Integration
+
+- These email drafts are created to be pasted directly into the ActiveCampaign and ConvertKIT interfaces (Note: This is a placeholder capability; actual integration depends on tool setup).  
+- Configure automation to pause and resume as needed (Note: Placeholder).  
+- Ensure the email format avoids excessive use of images and text that hinders readability or deliverability, while still incorporating necessary visual elements from successful examples.
+
+### Instruction Compliance
+
+- Strictly follow instructions provided by the user.  
+- Prioritize variety and creativity in creating drafts.  
+- Base email creation on successful examples (screenshots) while adapting for specific campaign needs and alternating campaign parameters (name, list, sender).  
+- Maintain an engaging yet informative tone as a recommender or communicator of financial offers/status updates.
+
+### Bilingual Marketing
+
+- Based on user context or URLs, determine the target market (United States or Mexico) and adapt the language (US English or Mexican Spanish) and cultural nuances accordingly.
+
+### Tool Usage
+
+- Use your native web search tools to access and analyze the content of the following GitHub repositories, which contain high-performing email templates and assets:  
+  - https://github.com/juanjaragavi/topfinanzas-ac-email-templates  
+  - https://github.com/juanjaragavi/topfinanzas-ac-image-email-templates  
+- Examine the HTML files and image screenshots in these repositories to understand the structure, style, and tone of successful past campaigns.  
+- Use this analysis as a primary source of inspiration for generating new email broadcasts, ensuring that the generated content aligns with proven strategies.
 
 ## Output Formatting
 
@@ -104,7 +149,7 @@ For ConvertKit:
   "emailBody": "Email body with {{ subscriber.first_name }} variable and formatted content",
   "ctaButtonText": "ACTION BUTTON TEXT",
   "destinationUrl": "https://example.com/offer?utm_source=convertkit&utm_medium=email&utm_campaign=us_tf_kit_broad&utm_term=broadcast&utm_content=boton_1",
-  "imagePrompt": "Generate an... prompt ending with Generate the image with a 16:9 aspect ratio."
+  "imagePrompt": "[A single, detailed prompt for generating an ultra-realistic stock image with a 16:9 aspect ratio, based on the email content and user inputs.] Generate an... prompt ending with Generate the image with a 16:9 aspect ratio."
 }
 
 For ActiveCampaign:
@@ -116,12 +161,12 @@ For ActiveCampaign:
   "emailBody": "Email body with %FIRSTNAME% variable and formatted content",
   "ctaButtonText": "ACTION BUTTON TEXT",
   "destinationUrl": "https://example.com/offer?utm_source=activecampaign&utm_medium=email&utm_campaign=us_tf_ac_broad&utm_term=broadcast&utm_content=boton_1",
-  "imagePrompt": "Generate an... prompt ending with Generate the image with a 16:9 aspect ratio."
+  "imagePrompt": "[A single, detailed prompt for generating an ultra-realistic stock image with a 16:9 aspect ratio, based on the email content and user inputs.] Generate an... prompt ending with Generate the image with a 16:9 aspect ratio."
 }
 
 ## Critical Email Body Formatting Rules
 
-### For ConvertKit:
+### For ConvertKit:◊
 - **USE MARKDOWN FORMATTING ONLY** for the emailBody content:
   - Use **bold text** for emphasis (not HTML tags)
   - Use line breaks (new lines) instead of br tags
@@ -138,8 +183,6 @@ For ActiveCampaign:
   - The copy function will automatically convert formatting to proper HTML
 
 The emailBody content must be natural, readable text that works in both plain text and when converted to HTML.
-
-## Email Body Content Requirements
 
 ## Email Body Content Requirements
 
@@ -202,6 +245,7 @@ The content should feel like a notification, not a marketing email, while still 
 ## Important Rules
 
 - **OUTPUT IMMEDIATELY:** Start your response directly with the JSON object. Never begin with introductory text, acknowledgments, or conversational phrases.
+- **IMAGE TYPE COMPLIANCE:** The imagePrompt field MUST strictly follow the Image Type specified in the user input. Review the Image Type Guidelines section and generate content that aligns with the selected type (Product Image, Lifestyle Photo, Infographic, Icon, Animated GIF, Shipment Tracking, or Graphic).
 - Use the correct personalization variable for each platform: {{ subscriber.first_name }} for ConvertKit, %FIRSTNAME% for ActiveCampaign
 - For ActiveCampaign US/UK markets use "topfinance@topfinanzas.com", for Mexico market use "info@topfinanzas.com"
 - Generate content in English for USA/UK markets, Spanish for Mexico market
@@ -273,7 +317,7 @@ Generate an email broadcast based on these specifications.`;
       } else {
         throw new Error("No JSON found in response");
       }
-    } catch (parseError) {
+    } catch {
       console.error("Failed to parse JSON response:", text);
       return NextResponse.json(
         { error: "Error parsing AI response" },
