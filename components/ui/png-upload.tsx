@@ -1,10 +1,7 @@
-"use client";
-
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -14,16 +11,16 @@ import {
 } from "@/components/ui/card";
 import {
   Upload,
-  FileText,
+  Image as ImageIcon,
   Loader2,
   Check,
   AlertCircle,
   ExternalLink,
   GitCommit,
+  FileImage,
 } from "lucide-react";
 
-interface FileUploadProps {
-  targetRepository?: string;
+interface PngUploadProps {
   onUploadSuccess?: (result: UploadResult) => void;
   onUploadError?: (error: string) => void;
 }
@@ -33,56 +30,83 @@ interface UploadResult {
   path: string;
   branch: string;
   commitUrl: string;
-  prUrl?: string;
+  fileUrl?: string;
 }
 
-interface UploadPayload {
-  filename: string;
-  content: string;
-  branchBase: string;
-  skipPr: boolean;
-  commitMessage?: string;
-}
-
-export function FileUpload({
-  targetRepository = "emailgenius-winner-broadcasts-subjects",
-  onUploadSuccess,
-  onUploadError,
-}: FileUploadProps) {
+export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
   const [filename, setFilename] = useState("");
-  const [content, setContent] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-generate filename with .md extension if user doesn't include it
-  const ensureMarkdownExtension = (name: string): string => {
-    if (!name) return "";
-    return name.endsWith(".md") ? name : `${name}.md`;
+  // Add .png extension if not present
+  const ensurePngExtension = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return "";
+    return trimmed.toLowerCase().endsWith(".png") ? trimmed : `${trimmed}.png`;
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/png")) {
+      setError("Solo se permiten archivos PNG");
+      return;
+    }
+
+    // Validate file size (1MB limit)
+    if (file.size > 1024 * 1024) {
+      setError("El archivo es demasiado grande. Límite: 1MB");
+      return;
+    }
+
+    setSelectedFile(file);
+    setError(null);
+
+    // Auto-populate filename if empty
+    if (!filename) {
+      const name = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+      setFilename(name);
+    }
+  };
+
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove the data URL prefix to get just the base64 string
+        const base64 = result.split(",")[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleUpload = async () => {
+    if (!selectedFile || !filename.trim()) return;
+
     setIsUploading(true);
     setError(null);
+    setResult(null);
 
     try {
-      if (!filename.trim() || !content.trim()) {
-        throw new Error(
-          "Por favor completa el nombre del archivo y el contenido"
-        );
-      }
+      // Convert file to base64
+      const base64Content = await convertToBase64(selectedFile);
+      const finalFilename = ensurePngExtension(filename);
 
-      const finalFilename = ensureMarkdownExtension(filename.trim());
-
-      const payload: UploadPayload = {
+      const payload = {
         filename: finalFilename,
-        content,
-        branchBase: "main", // Always use main branch
-        skipPr: true, // Always commit directly to main
-        commitMessage: `feat: add ${finalFilename} via EmailGenius`,
+        content: base64Content,
+        commitMessage: `feat: add ${finalFilename} via EmailGenius PNG Uploader`,
       };
 
-      const response = await fetch("/api/upload-winner-subject", {
+      const response = await fetch("/api/upload-png-image", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -90,18 +114,21 @@ export function FileUpload({
         body: JSON.stringify(payload),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        throw new Error(data.error || "Error en la subida");
       }
 
-      const result: UploadResult = await response.json();
-      setResult(result);
-      onUploadSuccess?.(result);
+      setResult(data);
+      onUploadSuccess?.(data);
 
       // Reset form
       setFilename("");
-      setContent("");
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error en la subida";
@@ -114,29 +141,54 @@ export function FileUpload({
 
   const resetUpload = () => {
     setFilename("");
-    setContent("");
+    setSelectedFile(null);
     setResult(null);
     setError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5 text-lime-600" />
+          <ImageIcon className="h-5 w-5 text-lime-600" />
           <span className="bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent">
-            Subir Asunto Ganador
+            Subir Imagen PNG
           </span>
         </CardTitle>
         <CardDescription>
-          Sube asuntos ganadores de broadcasts al repositorio{" "}
+          Sube archivos PNG de plantillas de email de ActiveCampaign al
+          repositorio{" "}
           <code className="bg-gradient-to-r from-lime-100 to-cyan-50 px-1 rounded">
-            {targetRepository}
+            topfinanzas-ac-image-email-templates
           </code>
-          . Se guardará como archivo markdown en la rama principal.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* File Selection */}
+        <div className="space-y-2">
+          <Label htmlFor="file-input">Seleccionar Archivo PNG *</Label>
+          <Input
+            id="file-input"
+            ref={fileInputRef}
+            type="file"
+            accept=".png,image/png"
+            onChange={handleFileSelect}
+            disabled={isUploading}
+            className="border-lime-200 focus:border-lime-400 focus:ring-lime-400"
+          />
+          {selectedFile && (
+            <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded">
+              <FileImage className="h-4 w-4" />
+              <span>
+                {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+              </span>
+            </div>
+          )}
+        </div>
+
         {/* Filename Input */}
         <div className="space-y-2">
           <Label htmlFor="filename">Nombre del Archivo *</Label>
@@ -144,27 +196,13 @@ export function FileUpload({
             id="filename"
             value={filename}
             onChange={(e) => setFilename(e.target.value)}
-            placeholder="ej: asunto-ganador-agosto-2025.md"
+            placeholder="ej: template-promocional-agosto-2025"
             disabled={isUploading}
             className="border-lime-200 focus:border-lime-400 focus:ring-lime-400"
           />
           <p className="text-xs text-gray-500">
-            Se creará como archivo .md automáticamente
+            Se añadirá la extensión .png automáticamente
           </p>
-        </div>
-
-        {/* Content Input */}
-        <div className="space-y-2">
-          <Label htmlFor="content">Contenido del Archivo de Asuntos *</Label>
-          <Textarea
-            id="content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Escribe aquí el asunto ganador del broadcast..."
-            rows={8}
-            disabled={isUploading}
-            className="border-lime-200 focus:border-lime-400 focus:ring-lime-400 bg-gradient-to-br from-white to-lime-50/30"
-          />
         </div>
 
         {/* Error Display */}
@@ -184,7 +222,7 @@ export function FileUpload({
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-gray-600" />
+                <FileImage className="h-4 w-4 text-gray-600" />
                 <span>
                   Archivo:{" "}
                   <code className="bg-white px-1 rounded border border-lime-100">
@@ -203,15 +241,37 @@ export function FileUpload({
                   Ver Commit <ExternalLink className="h-3 w-3" />
                 </a>
               </div>
+              {result.fileUrl && (
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4 text-gray-600" />
+                  <a
+                    href={result.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-cyan-600 hover:underline flex items-center gap-1 transition-colors"
+                  >
+                    Ver Archivo <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         )}
+
+        <CardDescription>
+          ℹ️ Solo se permiten archivos PNG. Nombra el archivo de manera
+          descriptiva como{" "}
+          <code className="bg-gradient-to-r from-lime-100 to-cyan-50 px-1 rounded">
+            template-promocional-agosto-2025.png
+          </code>
+          .
+        </CardDescription>
 
         {/* Action Buttons */}
         <div className="flex gap-2 pt-2">
           <Button
             onClick={handleUpload}
-            disabled={isUploading || !filename.trim() || !content.trim()}
+            disabled={isUploading || !selectedFile || !filename.trim()}
             className="flex-1 bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 text-white hover:opacity-90 transition-opacity"
           >
             {isUploading ? (
@@ -222,12 +282,12 @@ export function FileUpload({
             ) : (
               <>
                 <Upload className="mr-2 h-4 w-4" />
-                Crear y Subir Archivo de Asuntos
+                Subir Imagen PNG
               </>
             )}
           </Button>
 
-          {(content || result) && (
+          {(selectedFile || result) && (
             <Button
               onClick={resetUpload}
               variant="outline"

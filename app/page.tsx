@@ -32,6 +32,7 @@ import {
 import { marked } from "marked";
 import Image from "next/image";
 import { FileUpload } from "@/components/ui/file-upload";
+import { PngUpload } from "@/components/ui/png-upload";
 
 interface FormData {
   platform: "ActiveCampaign" | "ConvertKit";
@@ -823,6 +824,30 @@ export default function Home() {
               }}
               onUploadError={(error) => {
                 console.error("Upload error:", error);
+                // You can add additional error handling here
+              }}
+            />
+          </div>
+        </div>
+
+        {/* PNG Image Upload Section */}
+        <div className="mt-12">
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent mb-2">
+              Subir Imágenes PNG
+            </h3>
+            <p className="text-gray-600">
+              Sube capturas de pantalla de emails de ActiveCampaign de alto rendimiento
+            </p>
+          </div>
+          <div className="flex justify-center">
+            <PngUpload
+              onUploadSuccess={(result) => {
+                console.log("PNG Upload successful:", result);
+                // You can add additional success handling here
+              }}
+              onUploadError={(error) => {
+                console.error("PNG Upload error:", error);
                 // You can add additional error handling here
               }}
             />
