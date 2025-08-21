@@ -133,9 +133,11 @@ Based on the email content and user inputs, create a single, detailed prompt for
 
 - Use your native web search tools to access and analyze the content of the following GitHub repositories, which contain high-performing email templates and assets:  
   - https://github.com/juanjaragavi/topfinanzas-ac-email-templates  
-  - https://github.com/juanjaragavi/topfinanzas-ac-image-email-templates  
-- Examine the HTML files and image screenshots in these repositories to understand the structure, style, and tone of successful past campaigns.  
+  - https://github.com/juanjaragavi/topfinanzas-ac-image-email-templates
+  - https://github.com/juanjaragavi/emailgenius-winner-broadcasts-subjects  
+- Examine the subjects in the Markdown files, as well as the HTML files and image screenshots in these repositories to understand the structure, style, and tone of successful past campaigns.  
 - Use this analysis as a primary source of inspiration for generating new email broadcasts, ensuring that the generated content aligns with proven strategies.
+- Get inspired by the successful subject lines and incorporate similar language and themes into your own email campaigns.
 
 ## Output Formatting
 

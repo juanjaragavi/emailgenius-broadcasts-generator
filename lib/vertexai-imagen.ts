@@ -19,14 +19,14 @@ export class VertexAIImageService {
     this.projectId = process.env.GOOGLE_CLOUD_PROJECT || "";
     this.locationId = process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
     this.modelId = "imagen-4.0-generate-preview-06-06";
-    
+
     if (!this.projectId) {
       throw new Error("GOOGLE_CLOUD_PROJECT environment variable is required");
     }
 
     // Configure authentication with Service Account credentials
     const credentials = this.getServiceAccountCredentials();
-    
+
     this.auth = new GoogleAuth({
       credentials,
       scopes: ["https://www.googleapis.com/auth/cloud-platform"],
@@ -69,7 +69,7 @@ export class VertexAIImageService {
       // Get access token using Service Account credentials
       const client = await this.auth.getClient();
       const accessTokenResponse = await client.getAccessToken();
-      
+
       if (!accessTokenResponse.token) {
         throw new Error("Failed to obtain access token from Service Account");
       }
@@ -108,12 +108,16 @@ export class VertexAIImageService {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Vertex AI API Error:", errorText);
-        
+
         // Handle specific error cases
         if (response.status === 401) {
-          throw new Error("Authentication failed. Please check your Service Account credentials.");
+          throw new Error(
+            "Authentication failed. Please check your Service Account credentials."
+          );
         } else if (response.status === 403) {
-          throw new Error("Permission denied. Ensure the Service Account has Vertex AI permissions.");
+          throw new Error(
+            "Permission denied. Ensure the Service Account has Vertex AI permissions."
+          );
         } else if (response.status === 429) {
           throw new Error("API quota exceeded. Please try again later.");
         } else {
@@ -140,7 +144,7 @@ export class VertexAIImageService {
       return `data:${mimeType};base64,${prediction.bytesBase64Encoded}`;
     } catch (error) {
       console.error("Error generating image with Vertex AI:", error);
-      
+
       // Re-throw with more context
       if (error instanceof Error) {
         throw error;
@@ -161,7 +165,7 @@ export class VertexAIImageService {
     try {
       const client = await this.auth.getClient();
       const token = await client.getAccessToken();
-      
+
       return {
         configured: true,
         projectId: this.projectId,
@@ -169,7 +173,7 @@ export class VertexAIImageService {
         model: this.modelId,
         authConfigured: !!token.token,
       };
-    } catch (error) {
+    } catch {
       return {
         configured: false,
         projectId: this.projectId,
