@@ -144,7 +144,7 @@ export function FileUpload({
             id="filename"
             value={filename}
             onChange={(e) => setFilename(e.target.value)}
-            placeholder="ej: asunto-ganador-agosto-2025"
+            placeholder="ej: asunto-ganador-agosto-2025.md"
             disabled={isUploading}
             className="border-lime-200 focus:border-lime-400 focus:ring-lime-400"
           />
@@ -155,7 +155,7 @@ export function FileUpload({
 
         {/* Content Input */}
         <div className="space-y-2">
-          <Label htmlFor="content">Contenido del Asunto *</Label>
+          <Label htmlFor="content">Contenido del Archivo de Asuntos *</Label>
           <Textarea
             id="content"
             value={content}

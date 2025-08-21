@@ -59,10 +59,10 @@ El formulario de subida de archivos a GitHub ha sido simplificado exitosamente p
 // Solo dos campos esenciales
 <div className="space-y-2">
   <Label>Nombre del Archivo *</Label>
-  <Input placeholder="ej: asunto-ganador-agosto-2025" />
+  <Input placeholder="ej: asunto-ganador-agosto-2025.md" />
 </div>
 <div className="space-y-2">
-  <Label>Contenido del Asunto *</Label>
+  <Label>Contenido del Archivo de Asuntos *</Label>
   <Textarea placeholder="Escribe aquí el asunto ganador..." />
 </div>
 ```

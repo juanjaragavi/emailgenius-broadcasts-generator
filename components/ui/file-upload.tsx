@@ -124,7 +124,7 @@ export function FileUpload({
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-lime-600" />
           <span className="bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent">
-            Crear Archivo con los Asuntos Ganadores
+            Crea un Archivo con los Asuntos Ganadores
           </span>
         </CardTitle>
         <CardDescription>
@@ -141,7 +141,7 @@ export function FileUpload({
             id="filename"
             value={filename}
             onChange={(e) => setFilename(e.target.value)}
-            placeholder="ej: asuntos-ganadores-semana-4-agosto-2025"
+            placeholder="ej: asuntos-ganadores-semana-4-agosto-2025.md"
             disabled={isUploading}
             className="border-lime-200 focus:border-lime-400 focus:ring-lime-400"
           />
@@ -152,7 +152,7 @@ export function FileUpload({
 
         {/* Content Input */}
         <div className="space-y-2">
-          <Label htmlFor="content">Contenido del Asunto *</Label>
+          <Label htmlFor="content">Contenido del Archivo de Asuntos *</Label>
           <Textarea
             id="content"
             value={content}
