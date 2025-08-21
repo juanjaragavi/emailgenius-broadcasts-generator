@@ -571,7 +571,7 @@ export default function Home() {
                       alt="TopNetworks Watermark"
                       width={200}
                       height={200}
-                      className="opacity-10 grayscale select-none pointer-events-none"
+                      className="opacity-20 grayscale select-none pointer-events-none"
                       draggable={false}
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/30 to-white/40 rounded-full"></div>
