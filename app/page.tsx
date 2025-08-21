@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { marked } from "marked";
 import Image from "next/image";
+import { FileUpload } from "@/components/ui/file-upload";
 
 interface FormData {
   platform: "ActiveCampaign" | "ConvertKit";
@@ -801,6 +802,31 @@ export default function Home() {
               )}
             </CardContent>
           </Card>
+        </div>
+
+        {/* File Upload Section */}
+        <div className="mt-12">
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent mb-2">
+              Subir Asuntos Ganadores
+            </h3>
+            <p className="text-gray-600">
+              Sube los asuntos ganadores de tus broadcasts directamente al
+              repositorio de GitHub
+            </p>
+          </div>
+          <div className="flex justify-center">
+            <FileUpload
+              onUploadSuccess={(result) => {
+                console.log("Upload successful:", result);
+                // You can add additional success handling here
+              }}
+              onUploadError={(error) => {
+                console.error("Upload error:", error);
+                // You can add additional error handling here
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>
