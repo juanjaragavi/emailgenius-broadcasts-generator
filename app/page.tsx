@@ -809,11 +809,11 @@ export default function Home() {
         <div className="mt-12">
           <div className="text-center mb-6">
             <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent mb-2">
-              Subir Asuntos Ganadores
+              Entrenar IA con Asuntos Exitosos
             </h3>
             <p className="text-gray-600">
-              Sube los asuntos ganadores de tus broadcasts directamente al
-              repositorio de GitHub
+              Enseña a nuestro agente de IA con ejemplos de asuntos que han
+              generado altas tasas de apertura y clics
             </p>
           </div>
           <div className="flex justify-center">
@@ -834,10 +834,11 @@ export default function Home() {
         <div className="mt-12">
           <div className="text-center mb-6">
             <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent mb-2">
-              Subir Imágenes PNG
+              Entrenar IA con Ejemplos Visuales
             </h3>
             <p className="text-gray-600">
-              Sube capturas de pantalla de emails de ActiveCampaign de alto rendimiento
+              Alimenta al agente de IA con capturas de emails exitosos para
+              mejorar sus recomendaciones de diseño
             </p>
           </div>
           <div className="flex justify-center">

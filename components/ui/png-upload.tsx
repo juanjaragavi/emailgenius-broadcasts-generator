@@ -54,13 +54,15 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
 
     // Validate file type
     if (!file.type.startsWith("image/png")) {
-      setError("Solo se permiten archivos PNG");
+      setError(
+        "Solo se permiten capturas en formato PNG para el entrenamiento de IA"
+      );
       return;
     }
 
     // Validate file size (1MB limit)
     if (file.size > 1024 * 1024) {
-      setError("El archivo es demasiado grande. Límite: 1MB");
+      setError("La captura es muy grande para procesar. Límite: 1MB");
       return;
     }
 
@@ -103,7 +105,7 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
       const payload = {
         filename: finalFilename,
         content: base64Content,
-        commitMessage: `feat: add ${finalFilename} via EmailGenius PNG Uploader`,
+        commitMessage: `feat: agregar ejemplo visual ${finalFilename} para entrenamiento de IA`,
       };
 
       const response = await fetch("/api/upload-png-image", {
@@ -155,21 +157,20 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
         <CardTitle className="flex items-center gap-2">
           <ImageIcon className="h-5 w-5 text-lime-600" />
           <span className="bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent">
-            Subir Imagen PNG
+            Agregar Ejemplos Visuales de Emails Exitosos
           </span>
         </CardTitle>
         <CardDescription>
-          Sube archivos PNG de plantillas de email de ActiveCampaign al
-          repositorio{" "}
-          <code className="bg-gradient-to-r from-lime-100 to-cyan-50 px-1 rounded">
-            topfinanzas-ac-image-email-templates
-          </code>
+          Comparte capturas de emails con alto rendimiento para entrenar al
+          agente de IA en diseño y estructura visual efectiva.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* File Selection */}
         <div className="space-y-2">
-          <Label htmlFor="file-input">Seleccionar Archivo PNG *</Label>
+          <Label htmlFor="file-input">
+            Seleccionar Captura de Email Exitoso *
+          </Label>
           <Input
             id="file-input"
             ref={fileInputRef}
@@ -187,21 +188,26 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
               </span>
             </div>
           )}
+          <p className="text-xs text-gray-500">
+            📸 Solo archivos PNG. Ideal para capturas de pantalla de emails de
+            ActiveCampaign
+          </p>
         </div>
 
         {/* Filename Input */}
         <div className="space-y-2">
-          <Label htmlFor="filename">Nombre del Archivo *</Label>
+          <Label htmlFor="filename">Nombre Descriptivo del Ejemplo *</Label>
           <Input
             id="filename"
             value={filename}
             onChange={(e) => setFilename(e.target.value)}
-            placeholder="ej: template-promocional-agosto-2025"
+            placeholder="ej: email-promocional-alto-ctr-agosto-2025"
             disabled={isUploading}
             className="border-lime-200 focus:border-lime-400 focus:ring-lime-400"
           />
           <p className="text-xs text-gray-500">
-            Se añadirá la extensión .png automáticamente
+            💡 Describe el tipo de email y su efectividad (ej:
+            &quot;notificacion-envio-exitosa&quot;)
           </p>
         </div>
 
@@ -218,13 +224,13 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
           <div className="space-y-3 p-4 bg-gradient-to-r from-lime-50 to-cyan-50 border border-lime-200 rounded-md">
             <div className="flex items-center gap-2 text-lime-700 font-medium">
               <Check className="h-4 w-4" />
-              ¡Subida Exitosa!
+              ¡Ejemplo Visual Agregado al Entrenamiento!
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <FileImage className="h-4 w-4 text-gray-600" />
                 <span>
-                  Archivo:{" "}
+                  Ejemplo visual:{" "}
                   <code className="bg-white px-1 rounded border border-lime-100">
                     {result.path}
                   </code>
@@ -238,7 +244,8 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:text-cyan-600 hover:underline flex items-center gap-1 transition-colors"
                 >
-                  Ver Commit <ExternalLink className="h-3 w-3" />
+                  Ver Registro de Entrenamiento{" "}
+                  <ExternalLink className="h-3 w-3" />
                 </a>
               </div>
               {result.fileUrl && (
@@ -250,21 +257,25 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:text-cyan-600 hover:underline flex items-center gap-1 transition-colors"
                   >
-                    Ver Archivo <ExternalLink className="h-3 w-3" />
+                    Ver Ejemplo Visual <ExternalLink className="h-3 w-3" />
                   </a>
                 </div>
               )}
             </div>
+            <p className="text-xs text-emerald-700 bg-emerald-50 p-2 rounded border border-emerald-200">
+              🤖 El agente de IA ahora puede analizar este diseño para futuras
+              recomendaciones
+            </p>
           </div>
         )}
 
         <CardDescription>
-          ℹ️ Solo se permiten archivos PNG. Nombra el archivo de manera
-          descriptiva como{" "}
+          💡 <strong>Mejores ejemplos:</strong> Emails con alta tasa de
+          apertura, clics elevados, o diseños que generaron buenas conversiones.
+          Nombra descriptivamente como{" "}
           <code className="bg-gradient-to-r from-lime-100 to-cyan-50 px-1 rounded">
-            template-promocional-agosto-2025.png
+            notificacion-seguridad-exitosa-2025
           </code>
-          .
         </CardDescription>
 
         {/* Action Buttons */}
@@ -277,12 +288,12 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
             {isUploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Subiendo...
+                Entrenando IA...
               </>
             ) : (
               <>
                 <Upload className="mr-2 h-4 w-4" />
-                Subir Imagen PNG
+                Agregar al Entrenamiento Visual
               </>
             )}
           </Button>

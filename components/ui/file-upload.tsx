@@ -67,7 +67,7 @@ export function FileUpload({
     try {
       if (!filename.trim() || !content.trim()) {
         throw new Error(
-          "Por favor completa el nombre del archivo y el contenido"
+          "Por favor completa el nombre del archivo y agrega ejemplos de asuntos exitosos"
         );
       }
 
@@ -78,7 +78,7 @@ export function FileUpload({
         content,
         branchBase: "main", // Always use main branch
         skipPr: true, // Always commit directly to main
-        commitMessage: `feat: add ${finalFilename} via EmailGenius`,
+        commitMessage: `feat: agregar ejemplos de entrenamiento ${finalFilename} para agente de IA`,
       };
 
       const response = await fetch("/api/upload-winner-subject", {
@@ -124,44 +124,52 @@ export function FileUpload({
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-lime-600" />
           <span className="bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent">
-            Crea un Archivo con los Asuntos Ganadores
+            Agregar Ejemplos de Asuntos Exitosos
           </span>
         </CardTitle>
         <CardDescription>
-          Crea un archivo con los asuntos ganadores de los Broadcasts pasados,
-          dándole un nombre al archivo markdown y escribiendo directamente los
-          asuntos.
+          Crea una colección de asuntos que han demostrado alta efectividad.
+          Estos ejemplos entrenarán al agente de IA para generar mejores asuntos
+          en el futuro.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Filename Input */}
         <div className="space-y-2">
-          <Label htmlFor="filename">Nombre del Archivo *</Label>
+          <Label htmlFor="filename">
+            Nombre del Archivo de Entrenamiento *
+          </Label>
           <Input
             id="filename"
             value={filename}
             onChange={(e) => setFilename(e.target.value)}
-            placeholder="ej: asuntos-ganadores-semana-4-agosto-2025.md"
+            placeholder="ej: ejemplos-asuntos-exitosos-agosto-2025"
             disabled={isUploading}
             className="border-lime-200 focus:border-lime-400 focus:ring-lime-400"
           />
           <p className="text-xs text-gray-500">
-            Se creará como archivo .md automáticamente
+            El archivo se guardará automáticamente como .md
           </p>
         </div>
 
         {/* Content Input */}
         <div className="space-y-2">
-          <Label htmlFor="content">Contenido del Archivo de Asuntos *</Label>
+          <Label htmlFor="content">
+            Ejemplos de Asuntos con Alto Rendimiento *
+          </Label>
           <Textarea
             id="content"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Escribe aquí los asuntos ganadores de broadcasts pasados."
+            placeholder="Lista los asuntos de email que han tenido las mejores tasas de apertura y clics. Cada línea puede ser un ejemplo diferente.&#10;&#10;Ejemplo:&#10;🚨 Tu cuenta será suspendida en 24 horas&#10;✅ Confirmación de envío - Acción requerida&#10;⚠️ Verificación urgente de tu perfil"
             rows={8}
             disabled={isUploading}
             className="border-lime-200 focus:border-lime-400 focus:ring-lime-400 bg-gradient-to-br from-white to-lime-50/30"
           />
+          <p className="text-xs text-gray-500">
+            💡 Incluye asuntos que hayan generado altas tasas de apertura y
+            engagement
+          </p>
         </div>
 
         {/* Error Display */}
@@ -177,13 +185,13 @@ export function FileUpload({
           <div className="space-y-3 p-4 bg-gradient-to-r from-lime-50 to-cyan-50 border border-lime-200 rounded-md">
             <div className="flex items-center gap-2 text-lime-700 font-medium">
               <Check className="h-4 w-4" />
-              ¡Subida Exitosa!
+              ¡Ejemplos Agregados al Entrenamiento de IA!
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-gray-600" />
                 <span>
-                  Archivo:{" "}
+                  Archivo de entrenamiento:{" "}
                   <code className="bg-white px-1 rounded border border-lime-100">
                     {result.path}
                   </code>
@@ -197,19 +205,25 @@ export function FileUpload({
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:text-cyan-600 hover:underline flex items-center gap-1 transition-colors"
                 >
-                  Ver Commit <ExternalLink className="h-3 w-3" />
+                  Ver Registro de Entrenamiento{" "}
+                  <ExternalLink className="h-3 w-3" />
                 </a>
               </div>
             </div>
+            <p className="text-xs text-emerald-700 bg-emerald-50 p-2 rounded border border-emerald-200">
+              🤖 El agente de IA ahora puede usar estos ejemplos para mejorar
+              futuras generaciones
+            </p>
           </div>
         )}
 
         <CardDescription>
-          ℹ️ Nombra el archivo de la siguiente manera{" "}
+          💡 <strong>Consejo:</strong> Nombra el archivo de manera descriptiva
+          como{" "}
           <code className="bg-gradient-to-r from-lime-100 to-cyan-50 px-1 rounded">
-            asuntos-ganadores-01-31-2025.md
-          </code>
-          .
+            ejemplos-asuntos-financieros-2025
+          </code>{" "}
+          para facilitar la organización de ejemplos de entrenamiento.
         </CardDescription>
 
         {/* Action Buttons */}
@@ -222,12 +236,12 @@ export function FileUpload({
             {isUploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Subiendo...
+                Entrenando IA...
               </>
             ) : (
               <>
                 <Upload className="mr-2 h-4 w-4" />
-                Crear y Subir Archivo de Asuntos
+                Agregar al Entrenamiento de IA
               </>
             )}
           </Button>
