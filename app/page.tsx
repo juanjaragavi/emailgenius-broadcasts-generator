@@ -352,15 +352,30 @@ export default function Home() {
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Mail className="h-8 w-8 text-lime-600" />
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent">
-              EmailGenius
-            </h1>
-            <Sparkles className="h-8 w-8 text-cyan-500" />
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="flex items-center gap-2">
+              <Image
+                src="https://storage.googleapis.com/media-topfinanzas-com/images/topnetworks-positivo-sinfondo.webp"
+                alt="TopNetworks Logo"
+                width={350}
+                height={110}
+                className="h-20 w-auto"
+                priority
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Mail className="h-8 w-8 text-lime-600" />
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent">
+                EmailGenius
+              </h1>
+              <Sparkles className="h-8 w-8 text-cyan-500" />
+            </div>
           </div>
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent mb-2">
+            Generador de Broadcasts de Email
+          </h2>
           <p className="text-lg text-gray-700 font-medium">
-            Generador de Broadcasts de Email Optimizados
+            Plataforma Profesional de Marketing por Email
           </p>
           <p className="text-sm text-gray-600 mt-2">
             Crea broadcasts altamente efectivos para ConvertKit y ActiveCampaign
@@ -544,6 +559,28 @@ export default function Home() {
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-md p-4">
                   <p className="text-red-600 text-sm">{error}</p>
+                </div>
+              )}
+
+              {/* Watermark - only visible on desktop when no result and not loading */}
+              {!result && !isLoading && !error && (
+                <div className="hidden lg:flex items-center justify-center py-24 relative">
+                  <div className="relative">
+                    <Image
+                      src="https://storage.googleapis.com/media-topfinanzas-com/favicon.png"
+                      alt="TopNetworks Watermark"
+                      width={200}
+                      height={200}
+                      className="opacity-10 grayscale select-none pointer-events-none"
+                      draggable={false}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/30 to-white/40 rounded-full"></div>
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <p className="text-gray-400 text-lg font-medium opacity-60 select-none">
+                      Tu broadcast aparecerá aquí
+                    </p>
+                  </div>
                 </div>
               )}
 

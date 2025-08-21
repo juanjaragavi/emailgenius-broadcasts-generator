@@ -131,7 +131,7 @@ Based on the email content and user inputs, create a single, detailed prompt for
 
 ### Tool Usage
 
-- Use your native web search tools to access and analyze the content of the following GitHub repositories, which contain high-performing email templates and assets:  
+- Use your native web search tools to access and analyze the content of the following public GitHub repositories, which contain high-performing email templates and assets:  
   - https://github.com/juanjaragavi/topfinanzas-ac-email-templates  
   - https://github.com/juanjaragavi/topfinanzas-ac-image-email-templates
   - https://github.com/juanjaragavi/emailgenius-winner-broadcasts-subjects  

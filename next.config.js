@@ -9,6 +9,16 @@ const nextConfig = {
     VERTEX_AI_PROJECT_ID: process.env.VERTEX_AI_PROJECT_ID,
     VERTEX_AI_LOCATION: process.env.VERTEX_AI_LOCATION,
   },
-}
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "storage.googleapis.com",
+        port: "",
+        pathname: "/media-topfinanzas-com/**",
+      },
+    ],
+  },
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

@@ -10,16 +10,24 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "EmailGenius - Generador de Broadcasts",
+  title: "TopNetworks - Generador de Broadcasts de Email",
   description:
-    "Generador de broadcasts de email optimizados para ConvertKit y ActiveCampaign",
+    "Generador profesional de broadcasts de email optimizados para ConvertKit y ActiveCampaign by TopNetworks",
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon.png", type: "image/png", sizes: "32x32" },
+      {
+        url: "https://storage.googleapis.com/media-topfinanzas-com/favicon.png",
+        sizes: "any",
+      },
+      {
+        url: "https://storage.googleapis.com/media-topfinanzas-com/favicon.png",
+        type: "image/png",
+        sizes: "32x32",
+      },
     ],
-    apple: "/favicon.png",
-    shortcut: "/favicon.ico",
+    apple: "https://storage.googleapis.com/media-topfinanzas-com/favicon.png",
+    shortcut:
+      "https://storage.googleapis.com/media-topfinanzas-com/favicon.png",
   },
 };
 
@@ -31,9 +39,20 @@ export default function RootLayout({
   return (
     <html lang="es" className={poppins.variable}>
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/favicon.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/favicon.png" />
+        <link
+          rel="icon"
+          href="https://storage.googleapis.com/media-topfinanzas-com/favicon.png"
+          sizes="any"
+        />
+        <link
+          rel="icon"
+          href="https://storage.googleapis.com/media-topfinanzas-com/favicon.png"
+          type="image/png"
+        />
+        <link
+          rel="apple-touch-icon"
+          href="https://storage.googleapis.com/media-topfinanzas-com/favicon.png"
+        />
       </head>
       <body className="font-sans">
         <div className="min-h-screen bg-gradient-to-br from-lime-50 via-cyan-50 to-blue-100">
