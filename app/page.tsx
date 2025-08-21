@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,8 +20,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Mail, Sparkles, Copy, Check, ImageIcon, Download } from "lucide-react";
+import {
+  Loader2,
+  Mail,
+  Sparkles,
+  Copy,
+  Check,
+  ImageIcon,
+  Download,
+} from "lucide-react";
 import { marked } from "marked";
+import Image from "next/image";
 
 interface FormData {
   platform: "ActiveCampaign" | "ConvertKit";
@@ -49,19 +58,13 @@ export default function Home() {
   const [result, setResult] = useState<EmailBroadcast | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  
+
   // Image generation state
   const [imageUrl, setImageUrl] = useState<string>("");
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm<FormData>({
+  const { register, handleSubmit, watch, setValue, reset } = useForm<FormData>({
     defaultValues: {
       platform: "ConvertKit",
       market: "USA",
@@ -243,7 +246,7 @@ export default function Home() {
 
       const emailBroadcast = await response.json();
       setResult(emailBroadcast);
-      
+
       // Automatically generate image if imagePrompt is available
       if (emailBroadcast.imagePrompt) {
         await generateImage(emailBroadcast.imagePrompt);
@@ -254,12 +257,12 @@ export default function Home() {
       setIsLoading(false);
     }
   };
-  
+
   // Function to generate image
   const generateImage = async (imagePrompt: string) => {
     setImageLoading(true);
     setImageError(null);
-    
+
     try {
       const response = await fetch("/api/generate-image", {
         method: "POST",
@@ -268,28 +271,67 @@ export default function Home() {
         },
         body: JSON.stringify({ imagePrompt }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to generate image");
       }
-      
+
       const data = await response.json();
       if (data.imageUrl) {
         setImageUrl(data.imageUrl);
       }
     } catch (err) {
       console.error("Error generating image:", err);
-      setImageError(err instanceof Error ? err.message : "Error generating image");
+      setImageError(
+        err instanceof Error ? err.message : "Error generating image"
+      );
     } finally {
       setImageLoading(false);
     }
   };
-  
+
+  // Function to reset all form data and results
+  const handleReset = () => {
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      "¿Estás seguro de que quieres borrar todos los campos y el ƒcontenido generado?"
+    );
+
+    // Only proceed if user confirmed
+    if (!confirmed) {
+      return;
+    }
+
+    // Reset form to default values
+    reset({
+      platform: "ConvertKit",
+      market: "USA",
+      emailType: "security-alert",
+      imageType: "product-image",
+      url: "",
+      additionalInstructions: "",
+    });
+
+    // Clear all state
+    setResult(null);
+    setError(null);
+    setCopiedField(null);
+    setImageUrl("");
+    setImageError(null);
+    setImageLoading(false);
+
+    // Smooth scroll to top
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
   // Function to download image
   const downloadImage = async () => {
     if (!imageUrl) return;
-    
+
     try {
       const response = await fetch(imageUrl);
       const blob = await response.blob();
@@ -596,7 +638,7 @@ export default function Home() {
                     content={result.imagePrompt}
                     fieldName="imagePrompt"
                   />
-                  
+
                   {/* Image Generation Section */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -615,21 +657,28 @@ export default function Home() {
                         </Button>
                       )}
                     </div>
-                    
+
                     <div className="relative min-h-[200px] bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200 overflow-hidden">
                       {imageLoading && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                           <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
-                          <span className="text-sm text-gray-600">Generando imagen...</span>
+                          <span className="text-sm text-gray-600">
+                            Generando imagen...
+                          </span>
                         </div>
                       )}
-                      
+
                       {imageError && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
                           <ImageIcon className="h-8 w-8 text-red-400 mb-2" />
-                          <p className="text-sm text-red-600 text-center">{imageError}</p>
+                          <p className="text-sm text-red-600 text-center">
+                            {imageError}
+                          </p>
                           <Button
-                            onClick={() => result?.imagePrompt && generateImage(result.imagePrompt)}
+                            onClick={() =>
+                              result?.imagePrompt &&
+                              generateImage(result.imagePrompt)
+                            }
                             variant="outline"
                             size="sm"
                             className="mt-2"
@@ -638,26 +687,33 @@ export default function Home() {
                           </Button>
                         </div>
                       )}
-                      
+
                       {imageUrl && !imageLoading && (
                         <div className="relative w-full h-full">
-                          {/* Using img tag for base64 data URLs */}
-                          <img
+                          {/* Use Next.js Image for optimized loading */}
+                          <Image
                             src={imageUrl}
                             alt="Generated email header image"
+                            width={800}
+                            height={300}
                             className="w-full h-auto object-cover rounded-lg"
+                            style={{ objectFit: "cover" }}
+                            priority
+                            unoptimized={imageUrl.startsWith("data:")}
                           />
                         </div>
                       )}
-                      
+
                       {!imageUrl && !imageLoading && !imageError && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                           <ImageIcon className="h-8 w-8 text-gray-400 mb-2" />
-                          <p className="text-sm text-gray-500">La imagen aparecerá aquí</p>
+                          <p className="text-sm text-gray-500">
+                            La imagen aparecerá aquí
+                          </p>
                         </div>
                       )}
                     </div>
-                    
+
                     {!imageUrl && !imageLoading && result?.imagePrompt && (
                       <Button
                         onClick={() => generateImage(result.imagePrompt)}
@@ -673,7 +729,7 @@ export default function Home() {
                   <Button
                     onClick={() => {
                       const textToCopy = Object.entries(result)
-                        .filter(([key, value]) => value)
+                        .filter(([, value]) => value)
                         .map(([key, value]) => `${key}: ${value}`)
                         .join("\n\n");
                       navigator.clipboard.writeText(textToCopy);
@@ -683,6 +739,27 @@ export default function Home() {
                   >
                     Copiar Todo al Portapapeles
                   </Button>
+
+                  {/* Reset Buttons */}
+                  <div className="flex gap-3 pt-4">
+                    <Button
+                      onClick={handleReset}
+                      variant="outline"
+                      className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Generar Broadcast Nuevo
+                    </Button>
+
+                    <Button
+                      onClick={handleReset}
+                      variant="outline"
+                      className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
+                    >
+                      <Mail className="h-4 w-4 mr-2" />
+                      Borrar Todo
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>
