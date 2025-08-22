@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { VertexAI } from "@google-cloud/vertexai";
 import { githubContextFetcher } from "@/lib/mcp/github-context-fetcher";
+import { supermemoryClient } from "@/lib/mcp/supermemory-client-direct";
 
 // Initialize Vertex AI with service account credentials or ADC
 // This will try service account credentials first, then fall back to ADC
@@ -195,6 +196,28 @@ IMPORTANT: The dynamic repository context from MCP tools is automatically provid
 3. **Content Adaptation**: Apply proven patterns to the requested email type and market
 4. **Quality Assurance**: Ensure output matches the performance characteristics of reference materials
 
+### Memory-Enhanced Generation with Supermemory
+
+This system uses **Supermemory** - a universal memory layer for AI - to maintain context and prevent repetitive email patterns. During generation, you will receive memory context from previously generated emails:
+
+**Memory Context Integration**:
+1. **Previous Email Awareness**: The system provides context from recently generated email broadcasts to help you create unique variations
+2. **Pattern Avoidance**: Review provided memory context to avoid repeating similar layouts, subject lines, or content structures
+3. **Creative Variation**: Use memory insights to ensure each new email broadcast has distinct characteristics
+4. **Context Types**: Memory may include:
+   - Recent email subjects and preheaders
+   - Previously used CTAs and formatting patterns
+   - Platform-specific content variations
+   - Market-specific approaches (USA, UK, Mexico)
+
+**CRITICAL INSTRUCTION**: When memory context is provided in your prompt:
+- **ANALYZE** previous patterns to understand what has been recently generated
+- **DIFFERENTIATE** your new content to avoid repetitive structures or themes
+- **INNOVATE** with fresh approaches while maintaining proven engagement strategies
+- **BALANCE** uniqueness with effectiveness based on successful patterns
+
+The memory context will appear as "SUPERMEMORY CONTEXT FOR UNIQUENESS" sections in your prompt when available.
+
 ## Output Formatting
 
 Generate the email content components in ready-to-paste JSON format. Your output must be a valid JSON object with the following structure:
@@ -224,7 +247,7 @@ For ActiveCampaign:
 
 ## Critical Email Body Formatting Rules
 
-### For ConvertKit:◊
+### For ConvertKit:
 - **USE MARKDOWN FORMATTING ONLY** for the emailBody content:
   - Use **bold text** for emphasis (not HTML tags)
   - Use line breaks (new lines) instead of br tags
@@ -244,7 +267,7 @@ The emailBody content must be natural, readable text that works in both plain te
 
 ## Email Body Content Requirements
 
-The content of the email should be engaging and detailed, focused on generating clicks on the CTA button or links. It MUST include:
+The content of the email should be engaging and detailed, focused on generating clicks on the CTA button or links. It must include:
 
 - **Bold text** to highlight key information and create urgency
 - **Emojis** (e.g., ✅, ⚠️) for visual impact and engagement
@@ -256,7 +279,7 @@ The content of the email should be engaging and detailed, focused on generating 
 
 ### Detailed Email Body Content Example Structure:
 
-The email body should include **embedded CTA links within the text content** - these are action-oriented phrases that will appear underlined and colored blue in the final email. Examples:
+The email body should include **embedded CTA links within the text content** - these are action-oriented phrases that will appear underlined and colored blue in the final email. Example:
 
 Hi %FIRSTNAME%,
 
@@ -272,9 +295,9 @@ Your **account status** requires immediate attention. To ensure your card is del
 [Fictional Division, e.g., "Logistics & Fulfillment"]
 
 ### Email Body Structure Requirements:
-Email content should follow this EXACT formatting pattern while incorporating ALL the engagement elements above:
+Email content should follow this suggested formatting pattern while incorporating most or all of the engagement elements above, in order to catch the eye of the user:
 
-**CRITICAL FORMATTING RULES:**
+**Formatting Guidelines:**
 - **Line break after greeting**: Always add a blank line after "Hi %FIRSTNAME%," 
 - **Line break after main message**: Add blank line after important statements
 - **Bold signature**: Always make the department signature bold using **text**
@@ -283,20 +306,6 @@ Email content should follow this EXACT formatting pattern while incorporating AL
 - **Embedded CTA links**: Include clickable phrases within bullet points and text
 - **Bold emphasis**: Use bold text throughout for key information and urgency
 - **Urgent language**: Content should imply urgent or necessary action regarding "card," "account," or "profile"
-
-**EXACT STRUCTURE TO FOLLOW:**
-Line 1: Hi %FIRSTNAME%,
-Line 2: (blank line)
-Line 3: Main urgent message with **bold text** and embedded [CTA links](url)
-Line 4: (blank line)  
-Line 5: - ✅ **Bold text:** [Embedded CTA link](url) with action-oriented phrase
-Line 6: - ⚠️ **Bold text:** Additional urgent information or [second CTA link](url)
-Line 7: - 📊 **Bold text:** Final bullet point with compelling action
-Line 8: (blank line)
-Line 9: [Concise, urgent closing message with any final [CTA link](url)]
-Line 10: (blank line)
-Line 11: **[Department Name]**
-Line 12: [Division/Team information]
 
 The content should feel like a notification, not a marketing email, while still driving action through multiple engagement touchpoints.
 
@@ -405,6 +414,28 @@ export async function POST(request: NextRequest) {
       // Continue with empty context - the fetcher provides its own fallback
     }
 
+    // Fetch memory context from Supermemory
+    let memoryContext = "";
+    try {
+      console.log("🧠 Supermemory: Fetching memory context for uniqueness...");
+
+      memoryContext = await supermemoryClient.getContextForGeneration(
+        formData.platform,
+        formData.emailType,
+        formData.market
+      );
+
+      if (memoryContext) {
+        console.log(
+          `✅ Supermemory: Memory context retrieved (${memoryContext.length} chars)`
+        );
+      } else {
+        console.log("ℹ️ Supermemory: No relevant memory context found");
+      }
+    } catch (error) {
+      console.warn("⚠️ Supermemory: Failed to fetch memory context:", error);
+    }
+
     // Create user prompt from form data
     const userPrompt = `
 Platform: ${formData.platform}
@@ -425,12 +456,12 @@ Generate an email broadcast based on these specifications.`;
       ? `\n\n=== MCP CONTEXT INTEGRATION ACTIVE ===\nThe following dynamic context was fetched from GitHub repositories via MCP Server tools at ${new Date().toISOString()}:\n\n`
       : `\n\n=== MCP CONTEXT FALLBACK MODE ===\nDynamic context fetching failed. Proceeding with general guidelines.\n\n`;
 
-    const enhancedSystemPrompt = `${systemPrompt}${mcpContextHeader}${dynamicContext}`;
+    const enhancedSystemPrompt = `${systemPrompt}${mcpContextHeader}${dynamicContext}${memoryContext}`;
 
     console.log(
       `🤖 LLM: Generating email content with ${
         contextMetadata.success ? "MCP context" : "fallback mode"
-      }`
+      }${memoryContext ? " and Supermemory context" : ""}`
     );
 
     // Generate content using Vertex AI with enhanced context
@@ -463,6 +494,36 @@ Generate an email broadcast based on these specifications.`;
         { error: "Error parsing AI response" },
         { status: 500 }
       );
+    }
+
+    // Store the generated email in Supermemory for future context
+    try {
+      console.log(
+        "💾 Supermemory: Storing generated email for future context..."
+      );
+
+      const memoryEntry = {
+        content: JSON.stringify(emailBroadcast, null, 2),
+        timestamp: new Date().toISOString(),
+        metadata: {
+          platform: formData.platform,
+          emailType: formData.emailType,
+          market: formData.market,
+          subject: emailBroadcast.subjectLine1 || "",
+          preheader:
+            emailBroadcast.previewText || emailBroadcast.preheaderText || "",
+        },
+      };
+
+      const stored = await supermemoryClient.addToMemory(memoryEntry);
+
+      if (stored) {
+        console.log("✅ Supermemory: Email broadcast stored successfully");
+      } else {
+        console.warn("⚠️ Supermemory: Failed to store email broadcast");
+      }
+    } catch (error) {
+      console.warn("⚠️ Supermemory: Error storing email broadcast:", error);
     }
 
     return NextResponse.json(emailBroadcast);
