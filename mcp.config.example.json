@@ -1,27 +1,27 @@
 {
-  "mcpServers": {
-    "github-context": {
-      "command": "node",
-      "args": [
-        "./lib/mcp/github-context-server.js"
-      ],
-      "env": {
-        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
-      }
-    },
-    "github.com/modelcontextprotocol/servers/tree/main/src/github": {
-      "autoApprove": [],
-      "disabled": false,
-      "timeout": 60,
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-github"
-      ],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
-      }
+    "mcpServers": {
+        "github-context": {
+            "command": "node",
+            "args": [
+                "./lib/mcp/github-context-server.js"
+            ],
+            "env": {
+                "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+            }
+        },
+        "github.com/modelcontextprotocol/servers/tree/main/src/github": {
+            "autoApprove": [],
+            "disabled": false,
+            "timeout": 60,
+            "type": "stdio",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-github"
+            ],
+            "env": {
+                "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+            }
+        }
     }
-  }
 }
