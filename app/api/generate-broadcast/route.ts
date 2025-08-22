@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { VertexAI } from "@google-cloud/vertexai";
+import { githubContextFetcher } from "@/lib/mcp/github-context-fetcher";
 
 // Initialize Vertex AI with service account credentials or ADC
 // This will try service account credentials first, then fall back to ADC
@@ -129,15 +130,70 @@ Based on the email content and user inputs, create a single, detailed prompt for
 
 - Based on user context or URLs, determine the target market (United States or Mexico) and adapt the language (US English or Mexican Spanish) and cultural nuances accordingly.
 
-### Tool Usage
+### Tool Usage and MCP Server Access
 
-- Use your native web search tools to access and analyze the content of the following public GitHub repositories, which contain high-performing email templates and assets:  
-  - https://github.com/juanjaragavi/topfinanzas-ac-email-templates  
-  - https://github.com/juanjaragavi/topfinanzas-ac-image-email-templates
-  - https://github.com/juanjaragavi/emailgenius-winner-broadcasts-subjects  
-- Examine the subjects in the Markdown files, as well as the HTML files and image screenshots in these repositories to understand the structure, style, and tone of successful past campaigns.  
-- Use this analysis as a primary source of inspiration for generating new email broadcasts, ensuring that the generated content aligns with proven strategies.
-- Get inspired by the successful subject lines and incorporate similar language and themes into your own email campaigns.
+#### Available MCP Server Tools
+
+This system is equipped with Model Context Protocol (MCP) Server tools that provide direct, real-time access to curated GitHub repositories containing high-performing email templates and marketing assets. You have access to the following MCP tools:
+
+**Tool 1: fetch_repository_content**
+- Purpose: Fetch all content from specific GitHub repositories
+- Repositories Available:
+  - juanjaragavi/topfinanzas-ac-image-email-templates (42+ HTML templates and images)
+  - juanjaragavi/emailgenius-winner-broadcasts-subjects (proven subject lines)
+- Usage: Automatically fetches HTML email templates, subject lines, and marketing assets
+- Output: Structured repository content with file paths, content, and metadata
+
+**Tool 2: search_repository_files**
+- Purpose: Search for specific files or patterns within the repositories
+- Usage: Find specific email templates by keyword, file type, or content pattern
+- Output: Targeted search results with file content and match locations
+
+**Tool 3: get_email_templates_summary**
+- Purpose: Get comprehensive summary of all email templates and assets
+- Usage: Provides overview of available templates, file types, and structure analysis
+- Output: Structured summary with file counts, categories, and conteƒnt analysis
+
+#### MCP Tool Integration Strategy
+
+IMPORTANT: The dynamic repository context from MCP tools is automatically provided with each request. You DO NOT need to explicitly call MCP tools - the context is pre-fetched and injected into your prompt. Here's how to use this context:
+
+1. **Context Analysis**: Examine the dynamically provided GitHub repository context that includes:
+   - HTML email templates with proven performance records
+   - High-performing subject lines from successful campaigns
+   - Formatting patterns and structural elements
+   - Image assets and visual design references
+
+2. **Template Pattern Recognition**: 
+   - Identify successful email structures from the provided HTML templates
+   - Extract engagement elements (bold text, emojis, urgency language)
+   - Adapt proven formatting patterns to new content
+
+3. **Subject Line Inspiration**:
+   - Use the provided high-performing subject lines as reference
+   - Incorporate similar language patterns, urgency indicators, and engagement elements
+   - Adapt successful themes to the requested email type and market
+
+4. **Content Alignment**:
+   - Ensure generated content aligns with proven strategies from the repository context
+   - Maintain consistency with successful campaign styles and tones
+   - Apply structural patterns from high-performing templates
+
+#### Context-Driven Content Generation
+
+**Dynamic Context Access**: This system has direct access to high-performing email templates and marketing assets from curated repositories. The context includes successful HTML email templates, proven subject lines, and formatting patterns that are dynamically provided for each request.
+
+**Repository Context Integration**:
+- Examine the provided repository context to understand the structure, style, and tone of successful past campaigns
+- Use this analysis as a primary source of inspiration for generating new email broadcasts
+- Ensure that the generated content aligns with proven strategies from the MCP-provided context
+- Get inspired by the successful subject lines and incorporate similar language and themes
+
+**MCP-Enhanced Workflow**:
+1. **Context Reception**: Receive dynamically fetched repository content via MCP tools
+2. **Pattern Analysis**: Analyze successful templates and subject lines from the context
+3. **Content Adaptation**: Apply proven patterns to the requested email type and market
+4. **Quality Assurance**: Ensure output matches the performance characteristics of reference materials
 
 ## Output Formatting
 
@@ -244,6 +300,28 @@ Line 12: [Division/Team information]
 
 The content should feel like a notification, not a marketing email, while still driving action through multiple engagement touchpoints.
 
+## MCP Context Integration Guide
+
+**UNDERSTANDING YOUR DYNAMIC CONTEXT:**
+When you receive a request, you will automatically be provided with current repository context from the MCP Server tools. This context will appear in your prompt after the system instructions and will include:
+
+### Expected MCP Context Format:
+The dynamic context will contain repository information with HTML email templates, high-performing subject lines, and proven content patterns from successful campaigns. Look for sections containing:
+
+- Repository names and file counts
+- HTML Email Templates with proven engagement patterns  
+- High-Performing Subject Lines with emojis and urgency language
+- Markdown Content Files with curated patterns
+- Context Usage Instructions for applying the reference materials
+
+### How to Leverage MCP Context:
+1. **Scan the Provided Context**: Look for the "DYNAMIC GITHUB REPOSITORY CONTEXT" section that appears after these instructions
+2. **Extract Patterns**: Identify successful email structures, subject line patterns, and engagement elements
+3. **Apply Learnings**: Use the proven patterns to inform your email generation while adapting to the specific request
+4. **Maintain Quality**: Ensure your output reflects the high-engagement characteristics found in the reference materials
+
+**Note**: If no context appears or context fetching fails, proceed with the general guidelines, but always prefer using the dynamic context when available.
+
 ## Important Rules
 
 - **OUTPUT IMMEDIATELY:** Start your response directly with the JSON object. Never begin with introductory text, acknowledgments, or conversational phrases.
@@ -283,6 +361,50 @@ export async function POST(request: NextRequest) {
   try {
     const formData: FormData = await request.json();
 
+    // Fetch dynamic context from GitHub repositories via MCP integration
+    let dynamicContext = "";
+    let contextMetadata = {
+      success: false,
+      repositories: 0,
+      totalFiles: 0,
+      contextLength: 0,
+      fetchTime: 0,
+    };
+
+    try {
+      console.log(
+        "🔄 MCP: Fetching dynamic context from GitHub repositories..."
+      );
+      const startTime = Date.now();
+
+      dynamicContext = await githubContextFetcher.fetchEmailContext();
+
+      const endTime = Date.now();
+      contextMetadata = {
+        success: true,
+        repositories: 2, // We know we fetch from 2 repos
+        totalFiles: dynamicContext.includes("files):")
+          ? parseInt(
+              dynamicContext.match(/(\d+) files\):/g)?.[0]?.match(/\d+/)?.[0] ||
+                "0"
+            )
+          : 0,
+        contextLength: dynamicContext.length,
+        fetchTime: endTime - startTime,
+      };
+
+      console.log(
+        `✅ MCP: Dynamic context fetched successfully - ${contextMetadata.contextLength} chars in ${contextMetadata.fetchTime}ms`
+      );
+    } catch (error) {
+      console.warn(
+        "⚠️ MCP: Failed to fetch dynamic context, using fallback:",
+        error
+      );
+      contextMetadata.success = false;
+      // Continue with empty context - the fetcher provides its own fallback
+    }
+
     // Create user prompt from form data
     const userPrompt = `
 Platform: ${formData.platform}
@@ -298,10 +420,26 @@ ${
 
 Generate an email broadcast based on these specifications.`;
 
-    // Generate content using Vertex AI
+    // Combine system prompt with dynamic context and MCP awareness
+    const mcpContextHeader = contextMetadata.success
+      ? `\n\n=== MCP CONTEXT INTEGRATION ACTIVE ===\nThe following dynamic context was fetched from GitHub repositories via MCP Server tools at ${new Date().toISOString()}:\n\n`
+      : `\n\n=== MCP CONTEXT FALLBACK MODE ===\nDynamic context fetching failed. Proceeding with general guidelines.\n\n`;
+
+    const enhancedSystemPrompt = `${systemPrompt}${mcpContextHeader}${dynamicContext}`;
+
+    console.log(
+      `🤖 LLM: Generating email content with ${
+        contextMetadata.success ? "MCP context" : "fallback mode"
+      }`
+    );
+
+    // Generate content using Vertex AI with enhanced context
     const result = await model.generateContent({
       contents: [
-        { role: "user", parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] },
+        {
+          role: "user",
+          parts: [{ text: `${enhancedSystemPrompt}\n\n${userPrompt}` }],
+        },
       ],
     });
 

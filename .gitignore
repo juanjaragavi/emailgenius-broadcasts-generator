@@ -47,3 +47,6 @@ Thumbs.db
 
 # Backup files
 *.backup
+
+# Local MCP configs (ignore secrets)
+mcp.config.json
