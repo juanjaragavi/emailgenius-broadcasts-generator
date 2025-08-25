@@ -36,9 +36,9 @@ import { PngUpload } from "@/components/ui/png-upload";
 import { Header } from "@/components/ui/header";
 
 interface FormData {
-  platform: "ActiveCampaign" | "ConvertKit";
+  platform: "ActiveCampaign" | "ConvertKit" | "";
   emailType: string;
-  market: "USA" | "UK" | "Mexico";
+  market: "USA" | "UK" | "Mexico" | "";
   imageType: string;
   url?: string;
   additionalInstructions?: string;
@@ -80,10 +80,10 @@ export default function Home() {
 
   const { register, handleSubmit, watch, setValue, reset } = useForm<FormData>({
     defaultValues: {
-      platform: "ConvertKit",
-      market: "USA",
-      emailType: "security-alert",
-      imageType: "product-image",
+      platform: "",
+      market: "",
+      emailType: "",
+      imageType: "",
       includeHandwrittenSignature: false,
     },
   });
@@ -243,6 +243,14 @@ export default function Home() {
   );
 
   const onSubmit = async (data: FormData) => {
+    // Validate required fields
+    if (!data.platform || !data.emailType || !data.market || !data.imageType) {
+      setError(
+        "Por favor completa todos los campos obligatorios marcados con *"
+      );
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setResult(null);
@@ -367,10 +375,10 @@ export default function Home() {
 
     // Reset form to default values
     reset({
-      platform: "ConvertKit",
-      market: "USA",
-      emailType: "security-alert",
-      imageType: "product-image",
+      platform: "",
+      market: "",
+      emailType: "",
+      imageType: "",
       url: "",
       additionalInstructions: "",
       includeHandwrittenSignature: false,
@@ -436,7 +444,7 @@ export default function Home() {
                     <div className="space-y-2">
                       <Label htmlFor="platform">Plataforma *</Label>
                       <Select
-                        value={platform}
+                        value={platform || ""}
                         onValueChange={(value) =>
                           setValue("platform", value as FormData["platform"])
                         }
@@ -457,7 +465,7 @@ export default function Home() {
                     <div className="space-y-2">
                       <Label htmlFor="emailType">Tipo de Email *</Label>
                       <Select
-                        value={emailType}
+                        value={emailType || ""}
                         onValueChange={(value) => setValue("emailType", value)}
                       >
                         <SelectTrigger>
@@ -490,7 +498,7 @@ export default function Home() {
                     <div className="space-y-2">
                       <Label htmlFor="market">Mercado *</Label>
                       <Select
-                        value={market}
+                        value={market || ""}
                         onValueChange={(value) =>
                           setValue("market", value as FormData["market"])
                         }
@@ -516,7 +524,7 @@ export default function Home() {
                     <div className="space-y-2">
                       <Label htmlFor="imageType">Tipo de Imagen *</Label>
                       <Select
-                        value={imageType}
+                        value={imageType || ""}
                         onValueChange={(value) => setValue("imageType", value)}
                       >
                         <SelectTrigger>
