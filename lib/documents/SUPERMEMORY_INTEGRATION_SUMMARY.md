@@ -14,7 +14,7 @@ This document describes the implementation of **Supermemory** - a universal memo
 
 ### 1. Supermemory Client Integration
 
-**File**: `lib/mcp/supermemory-client.ts`
+**File**: `lib/mcp/supermemory-client-direct.ts`
 
 This module provides a direct API interface to Supermemory services:
 

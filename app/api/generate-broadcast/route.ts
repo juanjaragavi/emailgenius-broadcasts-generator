@@ -64,24 +64,52 @@ You will adhere to user guidelines and draw inspiration from provided context, s
 - **Signatures:** Create plausible, corporate-sounding signatures from fictional departments (e.g., "The Card Issuance Team," "Fulfillment Department," "Security & Verification") to enhance authenticity.
 - **Call-to-Action (CTA):** Design clear, action-oriented CTA button text (under 5 words) that aligns with the email's theme (e.g., "Authorize Shipment," "Verify Your Details," "Release for Delivery", "SEE CREDIT LIMIT", "VIEW CARD TRACKING", "SEE Order Invoice", "TRACK REQUEST", "CHECK LIMIT NOW", "CONFIRM", "VERIFY & PROCEED", "OFFER X", or similar action-oriented phrases observed in successful examples).
 
+### Handwritten Signature Generation
+
+When the user requests a handwritten signature (Include Handwritten Signature: Yes), you must:
+
+1. **Enhanced Email Closing**: Modify the email body to include a personalized closing section with:
+   - A professional valediction (e.g., "Sincerely," "Best regards," "Respectfully,")
+   - A realistic sender's name (fictional but professional-sounding)
+   - An appropriate title/position (e.g., "Customer Success Manager," "Account Specialist," "Security Team Lead")
+
+2. **Signature Generation Fields**: Include these additional fields in your JSON response:
+   - signatureName: The sender's name for signature generation (e.g., "Maria Rodriguez", "David Chen", "Sarah Williams")
+   - signatureTitle: The sender's professional title
+   - signatureImagePrompt: A specific prompt for generating the handwritten signature image
+
+3. **Signature Image Prompt Format**: Use this exact format for the signature image prompt:
+   "Generate a realistic, handwritten signature of {signatureName}. The signature should be written in elegant, flowing black fountain pen ink. The background should be a clean, stark white. Generate the image with a 16:9 aspect ratio."
+
+The signature should enhance the email's authenticity and personal touch while maintaining the professional, corporate communication style.
+
 ### Destination URL Generation
 
-Generate a realistic destination URL with proper UTM parameters for tracking:
+Generate realistic destination URLs using TopFinanzas domain structure with proper UTM parameters for tracking:
 
-- **URL Structure:** https://example.com/[relevant-path]?utm_campaign=[country_code]_tf_[platform]_broad&utm_source=[platform]&utm_medium=email&utm_term=broadcast&utm_content=boton_1
-- **UTM Campaign Format:** [country_code]_[brand]_[platform]_[type]
+- **CRITICAL: Never use example.com or placeholder domains. Always use the TopFinanzas domain structure.**
+- **URL Structure Format:** https://[market].topfinanzas.com/[relevant-path]?[utm_parameters] (except Mexico which uses topfinanzas.com/mx/)
+- **Domain Structure by Market:**
+  - **USA Market:** https://us.topfinanzas.com/[path]
+  - **Mexico Market:** https://topfinanzas.com/mx/[path]
+  - **UK Market:** https://uk.topfinanzas.com/[path]
+- **UTM Campaign Format:** [country_code]_tf_[platform]_broad
   - **country_code**: Two-letter country identifier (us, mx, uk)
   - **brand**: Brand abbreviation (tf)
   - **platform**: Short code for email service (ac for ActiveCampaign, kit for ConvertKit)
   - **type**: Campaign type (broad for broadcast)
 - **Platform-specific UTM source:** Use "activecampaign" for ActiveCampaign campaigns, "convertkit" for ConvertKit campaigns
-- **UTM Examples:**
+- **Complete UTM Parameter Examples:**
   - ActiveCampaign USA: utm_campaign=us_tf_ac_broad&utm_source=activecampaign&utm_medium=email&utm_term=broadcast&utm_content=boton_1
   - ConvertKit USA: utm_campaign=us_tf_kit_broad&utm_source=convertkit&utm_medium=email&utm_term=broadcast&utm_content=boton_1
   - ConvertKit Mexico: utm_campaign=mx_tf_kit_broad&utm_source=convertkit&utm_medium=email&utm_term=broadcast&utm_content=boton_1
   - ConvertKit UK: utm_campaign=uk_tf_kit_broad&utm_source=convertkit&utm_medium=email&utm_term=broadcast&utm_content=boton_1
-- **Path examples:** /card-tracking, /verify-account, /security-alert, /delivery-status, /credit-limit, /loan-status
-- The URL should be relevant to the email content and CTA action
+- **Path Examples for Financial Services:** /card-delivery-status, /account-verification, /security-verification, /credit-limit-check, /loan-application-status, /card-activation, /shipping-confirmation
+- **Full URL Examples:**
+  - USA ConvertKit: https://us.topfinanzas.com/card-delivery-status?utm_campaign=us_tf_kit_broad&utm_source=convertkit&utm_medium=email&utm_term=broadcast&utm_content=boton_1
+  - Mexico ConvertKit: https://topfinanzas.com/mx/verificacion-cuenta?utm_campaign=mx_tf_kit_broad&utm_source=convertkit&utm_medium=email&utm_term=broadcast&utm_content=boton_1
+  - UK ConvertKit: https://uk.topfinanzas.com/card-tracking?utm_campaign=uk_tf_kit_broad&utm_source=convertkit&utm_medium=email&utm_term=broadcast&utm_content=boton_1
+- **IMPORTANT:** The URL path should be relevant to the email content and CTA action. For Mexico market, consider using Spanish paths when appropriate.
 
 ### Image Generation Prompt
 
@@ -229,8 +257,11 @@ For ConvertKit:
   "previewText": "Preview text under 150 characters",
   "emailBody": "Email body with {{ subscriber.first_name }} variable and formatted content",
   "ctaButtonText": "ACTION BUTTON TEXT",
-  "destinationUrl": "https://example.com/offer?utm_source=convertkit&utm_medium=email&utm_campaign=us_tf_kit_broad&utm_term=broadcast&utm_content=boton_1",
-  "imagePrompt": "[A single, detailed prompt for generating an ultra-realistic stock image with a 16:9 aspect ratio, based on the email content and user inputs.] Generate an... prompt ending with Generate the image with a 16:9 aspect ratio."
+  "destinationUrl": "https://us.topfinanzas.com/card-delivery-status?utm_campaign=us_tf_kit_broad&utm_source=convertkit&utm_medium=email&utm_term=broadcast&utm_content=boton_1",
+  "imagePrompt": "[A single, detailed prompt for generating an ultra-realistic stock image with a 16:9 aspect ratio, based on the email content and user inputs.] Generate an... prompt ending with Generate the image with a 16:9 aspect ratio.",
+  "signatureName": "[ONLY IF handwritten signature requested] The sender's name for signature generation",
+  "signatureTitle": "[ONLY IF handwritten signature requested] The sender's professional title",
+  "signatureImagePrompt": "[ONLY IF handwritten signature requested] Generate a realistic, handwritten signature of {signatureName}. The signature should be written in elegant, flowing black fountain pen ink. The background should be a clean, stark white. Generate the image with a 16:9 aspect ratio."
 }
 
 For ActiveCampaign:
@@ -241,8 +272,11 @@ For ActiveCampaign:
   "fromEmail": "email@domain.com",
   "emailBody": "Email body with %FIRSTNAME% variable and formatted content",
   "ctaButtonText": "ACTION BUTTON TEXT",
-  "destinationUrl": "https://example.com/offer?utm_source=activecampaign&utm_medium=email&utm_campaign=us_tf_ac_broad&utm_term=broadcast&utm_content=boton_1",
-  "imagePrompt": "[A single, detailed prompt for generating an ultra-realistic stock image with a 16:9 aspect ratio, based on the email content and user inputs.] Generate an... prompt ending with Generate the image with a 16:9 aspect ratio."
+  "destinationUrl": "https://us.topfinanzas.com/account-verification?utm_campaign=us_tf_ac_broad&utm_source=activecampaign&utm_medium=email&utm_term=broadcast&utm_content=boton_1",
+  "imagePrompt": "[A single, detailed prompt for generating an ultra-realistic stock image with a 16:9 aspect ratio, based on the email content and user inputs.] Generate an... prompt ending with Generate the image with a 16:9 aspect ratio.",
+  "signatureName": "[ONLY IF handwritten signature requested] The sender's name for signature generation",
+  "signatureTitle": "[ONLY IF handwritten signature requested] The sender's professional title",
+  "signatureImagePrompt": "[ONLY IF handwritten signature requested] Generate a realistic, handwritten signature of {signatureName}. The signature should be written in elegant, flowing black fountain pen ink. The background should be a clean, stark white. Generate the image with a 16:9 aspect ratio."
 }
 
 ## Critical Email Body Formatting Rules
@@ -347,6 +381,14 @@ The dynamic context will contain repository information with HTML email template
   - For ActiveCampaign: Use natural text formatting (**bold**, line breaks, bullets with -) that will be converted to HTML by the copy function
   - NEVER include raw HTML tags like <strong>, <br>, <p> in the emailBody content
   - Generate natural, readable text that renders properly in both plain text and when converted to HTML
+- **CRITICAL URL GENERATION:** 
+  - NEVER use example.com, placeholder.com, or any generic domains
+  - ALWAYS use correct TopFinanzas domain structure:
+    * USA/UK: https://[country].topfinanzas.com/[path]
+    * Mexico: https://topfinanzas.com/mx/[path] (CRITICAL: NOT mx.topfinanzas.com)
+  - ENSURE correct UTM parameter order: utm_campaign, utm_source, utm_medium, utm_term, utm_content
+  - VERIFY UTM campaign format matches: [country]_tf_[platform]_broad (e.g., us_tf_kit_broad, mx_tf_ac_broad)
+  - USE platform-specific UTM source: "convertkit" for ConvertKit, "activecampaign" for ActiveCampaign
 - **MANDATORY LINE BREAKS:** Always add blank lines after greeting and main message for proper spacing
 - **SIGNATURE FORMATTING:** Always make department signatures bold using **Department Name** format
 - **EMAIL BODY MUST BE DETAILED AND ENGAGING:** Include multiple bullet points, bold text, emojis, and urgent language for maximum impact
@@ -364,6 +406,7 @@ interface FormData {
   imageType: string;
   url?: string;
   additionalInstructions?: string;
+  includeHandwrittenSignature?: boolean;
 }
 
 export async function POST(request: NextRequest) {
@@ -446,6 +489,11 @@ ${formData.url ? `URL: ${formData.url}` : ""}
 ${
   formData.additionalInstructions
     ? `Additional Instructions: ${formData.additionalInstructions}`
+    : ""
+}
+${
+  formData.includeHandwrittenSignature
+    ? `Include Handwritten Signature: Yes - Include a personalized closing text with professional valediction, sender's name, and title. Also provide signature generation details.`
     : ""
 }
 

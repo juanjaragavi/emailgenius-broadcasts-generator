@@ -67,15 +67,21 @@ export class GitHubContextFetcher {
   private async fetchRepositoryContext(
     repository: string
   ): Promise<RepositoryContext> {
-    // Check cache first
+    // Check cache first with improved logging
     const cached = this.cache.get(repository);
-    if (
-      cached &&
-      Date.now() - new Date(cached.lastFetched).getTime() < this.CACHE_TTL
-    ) {
-      return cached;
+    if (cached) {
+      const cacheAge = Date.now() - new Date(cached.lastFetched).getTime();
+      if (cacheAge < this.CACHE_TTL) {
+        console.log(
+          `📦 Using cached context for ${repository} (${Math.round(
+            cacheAge / 1000
+          )}s old)`
+        );
+        return cached;
+      }
     }
 
+    console.log(`🔄 Fetching fresh context for ${repository}...`);
     const [owner, repo] = repository.split("/");
 
     try {
@@ -159,6 +165,21 @@ export class GitHubContextFetcher {
 
       return context;
     } catch (error) {
+      console.error(`❌ GitHub API Error for ${repository}:`, error);
+
+      // If rate limit exceeded, return cached data or minimal context
+      if (error instanceof Error && error.message.includes("rate limit")) {
+        console.log("⚠️ GitHub rate limit exceeded, returning minimal context");
+        return {
+          repository,
+          files: [],
+          htmlTemplates: [],
+          markdownFiles: [],
+          subjectLines: [],
+          lastFetched: new Date().toISOString(),
+        };
+      }
+
       throw new Error(
         `Failed to fetch repository context for ${repository}: ${error}`
       );

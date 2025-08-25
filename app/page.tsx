@@ -42,6 +42,7 @@ interface FormData {
   imageType: string;
   url?: string;
   additionalInstructions?: string;
+  includeHandwrittenSignature?: boolean;
 }
 
 interface EmailBroadcast {
@@ -54,6 +55,9 @@ interface EmailBroadcast {
   ctaButtonText: string;
   imagePrompt: string;
   destinationUrl?: string;
+  signatureName?: string;
+  signatureTitle?: string;
+  signatureImagePrompt?: string;
 }
 
 export default function Home() {
@@ -67,16 +71,27 @@ export default function Home() {
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
 
+  // Signature image generation state
+  const [signatureImageUrl, setSignatureImageUrl] = useState<string>("");
+  const [signatureImageLoading, setSignatureImageLoading] = useState(false);
+  const [signatureImageError, setSignatureImageError] = useState<string | null>(
+    null
+  );
+
   const { register, handleSubmit, watch, setValue, reset } = useForm<FormData>({
     defaultValues: {
       platform: "ConvertKit",
       market: "USA",
       emailType: "security-alert",
       imageType: "product-image",
+      includeHandwrittenSignature: false,
     },
   });
 
   const platform = watch("platform");
+  const emailType = watch("emailType");
+  const market = watch("market");
+  const imageType = watch("imageType");
 
   // Helper function to detect if content contains HTML tags
   const containsHTMLTags = (content: string): boolean => {
@@ -233,6 +248,8 @@ export default function Home() {
     setResult(null);
     setImageUrl("");
     setImageError(null);
+    setSignatureImageUrl("");
+    setSignatureImageError(null);
 
     try {
       const response = await fetch("/api/generate-broadcast", {
@@ -253,6 +270,11 @@ export default function Home() {
       // Automatically generate image if imagePrompt is available
       if (emailBroadcast.imagePrompt) {
         await generateImage(emailBroadcast.imagePrompt);
+      }
+
+      // Generate signature image if handwritten signature is included and signatureName is available
+      if (data.includeHandwrittenSignature && emailBroadcast.signatureName) {
+        await generateSignatureImage(emailBroadcast.signatureName);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
@@ -294,6 +316,43 @@ export default function Home() {
     }
   };
 
+  // Function to generate signature image
+  const generateSignatureImage = async (signatureName: string) => {
+    setSignatureImageLoading(true);
+    setSignatureImageError(null);
+
+    try {
+      const signaturePrompt = `Generate a realistic, handwritten signature of ${signatureName}. The signature should be written in elegant, flowing black fountain pen ink. The background should be a clean, stark white. Generate the image with a 16:9 aspect ratio.`;
+
+      const response = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ imagePrompt: signaturePrompt }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || "Failed to generate signature image"
+        );
+      }
+
+      const data = await response.json();
+      if (data.imageUrl) {
+        setSignatureImageUrl(data.imageUrl);
+      }
+    } catch (err) {
+      console.error("Error generating signature image:", err);
+      setSignatureImageError(
+        err instanceof Error ? err.message : "Error generating signature image"
+      );
+    } finally {
+      setSignatureImageLoading(false);
+    }
+  };
+
   // Function to reset all form data and results
   const handleReset = () => {
     // Show confirmation dialog
@@ -314,6 +373,7 @@ export default function Home() {
       imageType: "product-image",
       url: "",
       additionalInstructions: "",
+      includeHandwrittenSignature: false,
     });
 
     // Clear all state
@@ -323,6 +383,9 @@ export default function Home() {
     setImageUrl("");
     setImageError(null);
     setImageLoading(false);
+    setSignatureImageUrl("");
+    setSignatureImageError(null);
+    setSignatureImageLoading(false);
 
     // Smooth scroll to top
     window.scrollTo({
@@ -373,6 +436,7 @@ export default function Home() {
                     <div className="space-y-2">
                       <Label htmlFor="platform">Plataforma *</Label>
                       <Select
+                        value={platform}
                         onValueChange={(value) =>
                           setValue("platform", value as FormData["platform"])
                         }
@@ -393,6 +457,7 @@ export default function Home() {
                     <div className="space-y-2">
                       <Label htmlFor="emailType">Tipo de Email *</Label>
                       <Select
+                        value={emailType}
                         onValueChange={(value) => setValue("emailType", value)}
                       >
                         <SelectTrigger>
@@ -425,6 +490,7 @@ export default function Home() {
                     <div className="space-y-2">
                       <Label htmlFor="market">Mercado *</Label>
                       <Select
+                        value={market}
                         onValueChange={(value) =>
                           setValue("market", value as FormData["market"])
                         }
@@ -450,6 +516,7 @@ export default function Home() {
                     <div className="space-y-2">
                       <Label htmlFor="imageType">Tipo de Imagen *</Label>
                       <Select
+                        value={imageType}
                         onValueChange={(value) => setValue("imageType", value)}
                       >
                         <SelectTrigger>
@@ -499,6 +566,23 @@ export default function Home() {
                         rows={3}
                         {...register("additionalInstructions")}
                       />
+                    </div>
+
+                    {/* Handwritten Signature Checkbox */}
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="includeHandwrittenSignature"
+                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        {...register("includeHandwrittenSignature")}
+                      />
+                      <Label
+                        htmlFor="includeHandwrittenSignature"
+                        className="text-sm font-medium text-gray-700 cursor-pointer"
+                      >
+                        Incluir textos de cierre personalizados y firma
+                        manuscrita personalizada
+                      </Label>
                     </div>
 
                     <Button
@@ -746,6 +830,161 @@ export default function Home() {
                           </Button>
                         )}
                       </div>
+
+                      {/* Signature Section - Only show if signature fields are present */}
+                      {(result.signatureName ||
+                        result.signatureTitle ||
+                        result.signatureImagePrompt) && (
+                        <div className="space-y-4 border-t pt-6">
+                          <Label className="text-sm font-medium text-gray-700">
+                            Firma Manuscrita Personalizada
+                          </Label>
+
+                          {result.signatureName && (
+                            <FieldWithCopy
+                              label="Nombre para la Firma:"
+                              content={result.signatureName}
+                              fieldName="signatureName"
+                            />
+                          )}
+
+                          {result.signatureTitle && (
+                            <FieldWithCopy
+                              label="Título del Firmante:"
+                              content={result.signatureTitle}
+                              fieldName="signatureTitle"
+                            />
+                          )}
+
+                          {result.signatureImagePrompt && (
+                            <FieldWithCopy
+                              label="Prompt para Generación de Firma:"
+                              content={result.signatureImagePrompt}
+                              fieldName="signatureImagePrompt"
+                            />
+                          )}
+
+                          {/* Signature Image Generation Section */}
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-sm font-medium text-gray-700">
+                                Imagen de Firma Manuscrita
+                              </Label>
+                              {signatureImageUrl && (
+                                <Button
+                                  onClick={async () => {
+                                    if (!signatureImageUrl) return;
+                                    try {
+                                      const response = await fetch(
+                                        signatureImageUrl
+                                      );
+                                      const blob = await response.blob();
+                                      const url =
+                                        window.URL.createObjectURL(blob);
+                                      const a = document.createElement("a");
+                                      a.href = url;
+                                      a.download = `handwritten-signature-${Date.now()}.png`;
+                                      document.body.appendChild(a);
+                                      a.click();
+                                      window.URL.revokeObjectURL(url);
+                                      document.body.removeChild(a);
+                                    } catch (error) {
+                                      console.error(
+                                        "Error downloading signature image:",
+                                        error
+                                      );
+                                    }
+                                  }}
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 px-2 text-xs"
+                                >
+                                  <Download className="h-3 w-3 mr-1" />
+                                  Descargar
+                                </Button>
+                              )}
+                            </div>
+
+                            <div className="relative min-h-[150px] bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200 overflow-hidden">
+                              {signatureImageLoading && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                  <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
+                                  <span className="text-sm text-gray-600">
+                                    Generando firma manuscrita...
+                                  </span>
+                                </div>
+                              )}
+
+                              {signatureImageError && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                                  <ImageIcon className="h-8 w-8 text-red-400 mb-2" />
+                                  <p className="text-sm text-red-600 text-center">
+                                    {signatureImageError}
+                                  </p>
+                                  <Button
+                                    onClick={() =>
+                                      result?.signatureName &&
+                                      generateSignatureImage(
+                                        result.signatureName
+                                      )
+                                    }
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-2"
+                                  >
+                                    Reintentar
+                                  </Button>
+                                </div>
+                              )}
+
+                              {signatureImageUrl && !signatureImageLoading && (
+                                <div className="relative w-full h-full">
+                                  <Image
+                                    src={signatureImageUrl}
+                                    alt="Generated handwritten signature"
+                                    width={800}
+                                    height={200}
+                                    className="w-full h-auto object-cover rounded-lg"
+                                    style={{ objectFit: "cover" }}
+                                    priority
+                                    unoptimized={signatureImageUrl.startsWith(
+                                      "data:"
+                                    )}
+                                  />
+                                </div>
+                              )}
+
+                              {!signatureImageUrl &&
+                                !signatureImageLoading &&
+                                !signatureImageError && (
+                                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    <ImageIcon className="h-8 w-8 text-gray-400 mb-2" />
+                                    <p className="text-sm text-gray-500">
+                                      La firma manuscrita aparecerá aquí
+                                    </p>
+                                  </div>
+                                )}
+                            </div>
+
+                            {!signatureImageUrl &&
+                              !signatureImageLoading &&
+                              result?.signatureName && (
+                                <Button
+                                  onClick={() =>
+                                    generateSignatureImage(
+                                      result.signatureName!
+                                    )
+                                  }
+                                  variant="outline"
+                                  className="w-full"
+                                >
+                                  <ImageIcon className="h-4 w-4 mr-2" />
+                                  Generar Firma Manuscrita
+                                </Button>
+                              )}
+                          </div>
+                        </div>
+                      )}
 
                       <Button
                         onClick={() => {
