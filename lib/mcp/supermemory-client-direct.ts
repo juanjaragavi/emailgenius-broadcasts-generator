@@ -89,23 +89,87 @@ This is an email broadcast layout that was previously generated to avoid repetit
       return [];
     }
 
-    // Based on testing, search endpoints are not currently working
-    // Return empty results gracefully to avoid blocking email generation
-    console.log(
-      `ℹ️ Supermemory search for "${query}" currently unavailable, returning empty results`
-    );
-    return [];
+    try {
+      console.log(`🔍 Searching Supermemory for: "${query}"`);
+
+      const response = await fetch(`${this.baseUrl}/memories/search`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          query: query,
+          limit: 5,
+        }),
+      });
+
+      if (!response.ok) {
+        console.log(
+          `⚠️ Supermemory search failed with status: ${response.status}`
+        );
+        return [];
+      }
+
+      const data = await response.json();
+      const results = this.parseSearchResults(data);
+      console.log(`✅ Found ${results.length} memories for "${query}"`);
+      return results;
+    } catch (error) {
+      console.error("❌ Supermemory search error:", error);
+      return [];
+    }
+  }
+
+  private parseSearchResults(data: unknown): MemorySearchResult[] {
+    const results: MemorySearchResult[] = [];
+
+    if (typeof data === "object" && data !== null) {
+      const dataObj = data as Record<string, unknown>;
+
+      // Handle different possible response formats
+      if (dataObj.memories && Array.isArray(dataObj.memories)) {
+        dataObj.memories.forEach((memory: unknown) => {
+          const memoryObj = memory as Record<string, unknown>;
+          results.push({
+            content: String(memoryObj.content || ""),
+            timestamp: String(memoryObj.timestamp || new Date().toISOString()),
+            relevanceScore: Number(memoryObj.score || 0),
+            metadata: (memoryObj.metadata as Record<string, unknown>) || {},
+          });
+        });
+      } else if (dataObj.results && Array.isArray(dataObj.results)) {
+        dataObj.results.forEach((result: unknown) => {
+          const resultObj = result as Record<string, unknown>;
+          results.push({
+            content: String(resultObj.content || resultObj.text || ""),
+            timestamp: String(resultObj.timestamp || new Date().toISOString()),
+            relevanceScore: Number(resultObj.score || resultObj.relevance || 0),
+            metadata: (resultObj.metadata as Record<string, unknown>) || {},
+          });
+        });
+      } else if (Array.isArray(data)) {
+        data.forEach((item: unknown) => {
+          const itemObj = item as Record<string, unknown>;
+          results.push({
+            content: String(itemObj.content || itemObj.text || ""),
+            timestamp: String(itemObj.timestamp || new Date().toISOString()),
+            relevanceScore: Number(itemObj.score || 0),
+            metadata: (itemObj.metadata as Record<string, unknown>) || {},
+          });
+        });
+      }
+    }
+
+    return results;
   }
 
   async getRecentBroadcasts(
     platform?: string,
     emailType?: string
   ): Promise<MemorySearchResult[]> {
-    // Search functionality is currently unavailable
-    console.log(
-      `ℹ️ Recent broadcasts search for ${platform}-${emailType} unavailable`
-    );
-    return [];
+    const query = `email broadcast ${platform || ""} ${emailType || ""}`.trim();
+    return this.searchMemories(query);
   }
 
   async getContextForGeneration(
@@ -113,11 +177,47 @@ This is an email broadcast layout that was previously generated to avoid repetit
     emailType: string,
     market: string
   ): Promise<string> {
-    // Since search is unavailable, return empty context
-    console.log(
-      `ℹ️ Context generation for ${platform}-${emailType}-${market} unavailable`
-    );
-    return "";
+    try {
+      console.log(
+        `🧠 Generating context for ${platform}-${emailType}-${market}`
+      );
+
+      // Search for similar broadcasts
+      const recentSimilar = await this.searchMemories(
+        `email broadcast ${platform} ${emailType} ${market}`
+      );
+
+      const allRecent = await this.searchMemories("email broadcast");
+
+      let contextText = "";
+
+      if (recentSimilar.length > 0) {
+        contextText += `\n### RECENT SIMILAR BROADCASTS (${platform} - ${emailType} - ${market}):\n`;
+        recentSimilar.forEach((memory, index) => {
+          contextText += `\n--- Similar Broadcast ${
+            index + 1
+          } ---\n${memory.content.substring(0, 800)}...\n`;
+        });
+      }
+
+      if (allRecent.length > 0) {
+        contextText += `\n### RECENT EMAIL PATTERNS TO AVOID REPEATING:\n`;
+        allRecent.forEach((memory, index) => {
+          contextText += `\n--- Recent Pattern ${
+            index + 1
+          } ---\n${memory.content.substring(0, 500)}...\n`;
+        });
+      }
+
+      if (contextText) {
+        contextText = `\n=== SUPERMEMORY CONTEXT FOR UNIQUENESS ===\nUse this context to ensure the new email is unique and avoids repetitive patterns.\n${contextText}\n=== END SUPERMEMORY CONTEXT ===\n`;
+      }
+
+      return contextText;
+    } catch (error) {
+      console.error("❌ Failed to get context from Supermemory:", error);
+      return "";
+    }
   }
 }
 
