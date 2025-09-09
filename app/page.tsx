@@ -490,6 +490,13 @@ export default function Home() {
                           <SelectItem value="status-update">
                             Actualización de Estado
                           </SelectItem>
+                          {/* New dynamic formats */}
+                          <div className="py-1 border-t" />
+                          <SelectItem value="bank-employee">
+                            Empleado Bancario
+                          </SelectItem>
+                          <SelectItem value="personal">Personal</SelectItem>
+                          <SelectItem value="brand">Marca (Brand)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
