@@ -252,6 +252,21 @@ export default function Home() {
     }
 
     setIsLoading(true);
+
+    // Smooth scroll to top with ease-in-out animation
+    // Add a small delay to ensure the loading state renders first
+    setTimeout(() => {
+      try {
+        // Try smooth scrolling first
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      } catch {
+        // Fallback for browsers that don't support smooth scrolling
+        window.scrollTo(0, 0);
+      }
+    }, 100);
     setError(null);
     setResult(null);
     setImageUrl("");
