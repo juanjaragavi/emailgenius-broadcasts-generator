@@ -440,6 +440,11 @@ export default function Home() {
   return (
     <>
       <Header />
+      <div className="container mx-auto px-4">
+        <div className="my-6 flex justify-center">
+          <div id="square01" data-topads data-topads-size="square" />
+        </div>
+      </div>
       <div className="container mx-auto py-8 px-4">
         <div className="max-w-4xl mx-auto">
           {/* Main Email Generator Section */}
@@ -645,6 +650,9 @@ export default function Home() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  <div className="mb-6 flex justify-center">
+                    <div id="square02" data-topads data-topads-size="square" />
+                  </div>
                   {isLoading && (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
