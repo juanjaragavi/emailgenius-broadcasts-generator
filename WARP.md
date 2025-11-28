@@ -434,7 +434,6 @@ The application is served through Apache reverse proxy with:
 The application now uses a **hybrid authentication approach** with automatic fallback:
 
 1. **Primary**: Service Account Credentials via Environment Variables
-
    - Email: `sheets-service-account@absolute-brook-452020-d5.iam.gserviceaccount.com`
    - Private Key: Stored in PM2 environment configuration
    - Permissions: Vertex AI User role
@@ -509,7 +508,6 @@ if (
    ```
 
 3. **Copy Functionality Issues**:
-
    - Ensure modern browser with ClipboardItem API support
    - Check browser security settings for clipboard access
 
@@ -837,19 +835,16 @@ sudo -u www-data pm2 logs emailgenius-broadcasts-generator --lines 50
 ### Image Generation Troubleshooting
 
 1. **Authentication Errors (401)**:
-
    - Verify Service Account email and private key in environment
    - Check PM2 ecosystem configuration
    - Ensure private key format includes newlines
 
 2. **Permission Denied (403)**:
-
    - Verify Service Account has Vertex AI User role
    - Check project IAM settings in GCP Console
    - Ensure Vertex AI API is enabled
 
 3. **Quota Exceeded (429)**:
-
    - Check Vertex AI quotas in GCP Console
    - Wait and retry after quota reset
    - Consider upgrading quota limits

@@ -56,12 +56,10 @@ The system now provides specific instructions for each image type:
 ### Test Cases Conducted
 
 1. **Infographic Type Test**
-
    - Input: `{"imageType":"infographic"}`
    - Result: Generated infographic-specific prompt with step-by-step process visualization
 
 2. **Product Image Type Test**
-
    - Input: `{"imageType":"product-image"}`
    - Result: Generated product-focused prompt with professional studio shot description
 

@@ -182,19 +182,16 @@ Expected response:
 ### Common Issues
 
 1. **Authentication Error (401/403)**
-
    - Check that GITHUB_APP_ID is correct
    - Verify private key format (ensure newlines are properly escaped)
    - Confirm app is installed on the target repository
 
 2. **Repository Not Found (404)**
-
    - Verify GITHUB_OWNER and GITHUB_REPO values
    - Check that the app has access to the repository
    - Ensure repository exists and is accessible
 
 3. **Permission Denied**
-
    - Review app permissions in GitHub App settings
    - Ensure "Contents" permission is set to "Read and Write"
    - Check that app installation includes the target repository

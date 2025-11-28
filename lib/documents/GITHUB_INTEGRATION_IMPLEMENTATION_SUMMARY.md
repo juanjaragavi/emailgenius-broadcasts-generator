@@ -120,6 +120,7 @@ Enhanced commit messages include:
 chore(upload): add winner-subject-marketing.md via EmailGenius
 
 File details:
+
 - Size: 1245 bytes
 - Extension: .md
 - Upload time: 2025-08-21T10:30:00.000Z

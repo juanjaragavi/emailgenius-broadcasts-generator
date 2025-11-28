@@ -9,13 +9,11 @@ The EmailGenius Broadcasts Generator now includes automated AI-powered image gen
 ### Components
 
 1. **Vertex AI Service** (`lib/vertexai-imagen.ts`)
-
    - Handles authentication with GCP Service Account
    - Manages API calls to Vertex AI Imagen model
    - Returns base64-encoded images
 
 2. **API Endpoint** (`app/api/generate-image/route.ts`)
-
    - Processes image generation requests
    - Handles error management and status codes
    - Provides health check endpoint
@@ -165,19 +163,16 @@ If automatic generation fails or you want to regenerate:
 ### Common Errors and Solutions
 
 1. **Authentication Failed (401)**
-
    - Verify Service Account credentials in `.env.local`
    - Ensure private key format is correct
    - Check that service account email is valid
 
 2. **Permission Denied (403)**
-
    - Verify Service Account has Vertex AI permissions
    - Check project IAM settings
    - Ensure Vertex AI API is enabled
 
 3. **Quota Exceeded (429)**
-
    - Wait and retry later
    - Check GCP quotas and limits
    - Consider upgrading quota limits

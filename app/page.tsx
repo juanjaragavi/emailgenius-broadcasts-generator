@@ -913,9 +913,8 @@ export default function Home() {
                                   onClick={async () => {
                                     if (!signatureImageUrl) return;
                                     try {
-                                      const response = await fetch(
-                                        signatureImageUrl
-                                      );
+                                      const response =
+                                        await fetch(signatureImageUrl);
                                       const blob = await response.blob();
                                       const url =
                                         window.URL.createObjectURL(blob);

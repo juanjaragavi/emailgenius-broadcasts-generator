@@ -411,7 +411,6 @@ The application is served through Apache reverse proxy with:
 The application now uses a **hybrid authentication approach** with automatic fallback:
 
 1. **Primary**: Service Account Credentials via Environment Variables
-
    - Email: `sheets-service-account@absolute-brook-452020-d5.iam.gserviceaccount.com`
    - Private Key: Stored in PM2 environment configuration
    - Permissions: Vertex AI User role
@@ -486,7 +485,6 @@ if (
    ```
 
 3. **Copy Functionality Issues**:
-
    - Ensure modern browser with ClipboardItem API support
    - Check browser security settings for clipboard access
 

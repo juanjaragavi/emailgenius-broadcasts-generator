@@ -164,7 +164,6 @@ Generate the email content components in ready-to-paste Markdown format. Your ou
 - **Preview Text:**
 
 - **Email Body:** Hi {{ subscriber.first\_name }}, Your **account status** requires your attention. Please **verify your shipping details** to avoid any delays.
-
   - ✅ **Action Required:** Confirm your address
   - ⚠️ **Update:** Your package is pending confirmation.
 
