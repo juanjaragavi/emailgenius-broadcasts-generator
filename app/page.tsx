@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,8 @@ import {
   Check,
   ImageIcon,
   Download,
+  History,
+  Clock,
 } from "lucide-react";
 import { marked } from "marked";
 import Image from "next/image";
@@ -43,6 +45,7 @@ interface FormData {
   url?: string;
   additionalInstructions?: string;
   includeHandwrittenSignature?: boolean;
+  session_id?: string;
 }
 
 interface EmailBroadcast {
@@ -58,6 +61,18 @@ interface EmailBroadcast {
   signatureName?: string;
   signatureTitle?: string;
   signatureImagePrompt?: string;
+  _meta?: {
+    session_id: string;
+    broadcast_id: number;
+  };
+}
+
+interface BroadcastHistoryItem {
+  id: number;
+  title: string;
+  created_at: string;
+  status: string;
+  generated_content: EmailBroadcast;
 }
 
 export default function Home() {
@@ -65,6 +80,9 @@ export default function Home() {
   const [result, setResult] = useState<EmailBroadcast | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string>("");
+  const [history, setHistory] = useState<BroadcastHistoryItem[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Image generation state
   const [imageUrl, setImageUrl] = useState<string>("");
@@ -87,6 +105,36 @@ export default function Home() {
       includeHandwrittenSignature: false,
     },
   });
+
+  useEffect(() => {
+    // Initialize session
+    let sid = sessionStorage.getItem("emailgenius_session_id");
+    if (!sid) {
+      sid = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      sessionStorage.setItem("emailgenius_session_id", sid);
+    }
+    setSessionId(sid);
+    fetchHistory(sid);
+  }, []);
+
+  const fetchHistory = async (sid: string) => {
+    try {
+      const res = await fetch(`/api/broadcasts?session_id=${sid}`);
+      if (res.ok) {
+        const data = await res.json();
+        setHistory(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch history", e);
+    }
+  };
+
+  const loadFromHistory = (item: BroadcastHistoryItem) => {
+    setResult(item.generated_content);
+    // You might want to populate the form as well if configuration is stored
+    // setValue("platform", item.configuration.platform); // etc.
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const platform = watch("platform");
   const emailType = watch("emailType");
@@ -280,7 +328,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, session_id: sessionId }),
       });
 
       if (!response.ok) {
@@ -289,6 +337,7 @@ export default function Home() {
 
       const emailBroadcast = await response.json();
       setResult(emailBroadcast);
+      fetchHistory(sessionId); // Refresh history
 
       // Automatically generate image if imagePrompt is available
       if (emailBroadcast.imagePrompt) {
@@ -380,7 +429,7 @@ export default function Home() {
   const handleReset = () => {
     // Show confirmation dialog
     const confirmed = window.confirm(
-      "¿Estás seguro de que quieres borrar todos los campos y el ƒcontenido generado?"
+      "¿Estás seguro de que quieres borrar todos los campos y el contenido generado?"
     );
 
     // Only proceed if user confirmed
@@ -453,12 +502,54 @@ export default function Home() {
               {/* Form */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Configuración del Broadcast</CardTitle>
+                  <CardTitle className="flex justify-between items-center">
+                    <span>Configuración del Broadcast</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowHistory(!showHistory)}
+                      className="text-gray-500 hover:text-blue-600"
+                    >
+                      <History className="h-4 w-4 mr-1" />
+                      Historial
+                    </Button>
+                  </CardTitle>
                   <CardDescription>
                     Completa los campos para generar tu broadcast personalizado
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {showHistory && history.length > 0 && (
+                    <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200 max-h-60 overflow-y-auto">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Broadcasts Recientes
+                      </h4>
+                      <div className="space-y-2">
+                        {history.map((item) => (
+                          <div
+                            key={item.id}
+                            className="text-xs p-2 bg-white rounded border hover:border-blue-300 cursor-pointer transition-colors"
+                            onClick={() => {
+                              loadFromHistory(item);
+                              setShowHistory(false);
+                            }}
+                          >
+                            <div className="font-medium truncate">
+                              {item.title || "Sin título"}
+                            </div>
+                            <div className="text-gray-500 flex justify-between mt-1">
+                              <span>
+                                {new Date(item.created_at).toLocaleDateString()}
+                              </span>
+                              <span className="capitalize">{item.status}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     {/* Platform */}
                     <div className="space-y-2">

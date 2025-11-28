@@ -81,6 +81,34 @@ Una aplicación Next.js para generar broadcasts de email optimizados para Conver
 
 7. Abre [http://localhost:3020](http://localhost:3020) en tu navegador.
 
+### Configuración de Base de Datos (PostgreSQL)
+
+Esta aplicación utiliza una base de datos PostgreSQL (Google Cloud SQL) para almacenar el historial de broadcasts y sesiones.
+
+1. **Variables de Entorno**: Asegúrate de que tu `.env.local` tenga las credenciales de la base de datos:
+
+   ```env
+   DB_HOST=34.16.99.221
+   DB_PORT=5432
+   DB_NAME=emailgenius
+   DB_USER=postgres
+   DB_PASSWORD=tu_password
+   ```
+
+2. **Inicialización de Schema**:
+   Para crear las tablas necesarias, ejecuta el script de inicialización:
+
+   ```bash
+   npx tsx scripts/init-db.ts
+   ```
+
+3. **Verificación**:
+   Puedes verificar que la base de datos está conectada y las tablas existen con:
+
+   ```bash
+   npx tsx scripts/verify-db.ts
+   ```
+
 ## Configuración del Proyecto
 
 ### Dependencias

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { githubContextFetcher } from "@/lib/mcp/github-context-fetcher";
 import { supermemoryClient } from "@/lib/mcp/supermemory-client-direct";
+import { SessionService } from "@/lib/database/services/session.service";
+import { BroadcastService } from "@/lib/database/services/broadcast.service";
+import { ApiRequestService } from "@/lib/database/services/api-request.service";
 
 // Initialize Vertex AI with service account credentials or ADC
 // This will try service account credentials first, then fall back to ADC
@@ -441,11 +444,29 @@ interface FormData {
   url?: string;
   additionalInstructions?: string;
   includeHandwrittenSignature?: boolean;
+  session_id?: string; // Added session_id
 }
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  let sessionId = "";
+
   try {
     const formData: FormData = await request.json();
+    sessionId =
+      formData.session_id ||
+      `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+    // Ensure session exists
+    try {
+      let session = await SessionService.getSession(sessionId);
+      if (!session) {
+        session = await SessionService.createSession(sessionId);
+      }
+    } catch (dbError) {
+      console.error("Database error creating/fetching session:", dbError);
+      // Continue without DB if it fails, but log it
+    }
 
     // Fetch dynamic context from GitHub repositories via MCP integration
     let dynamicContext = "";
@@ -461,11 +482,11 @@ export async function POST(request: NextRequest) {
       console.log(
         "🔄 MCP: Fetching dynamic context from GitHub repositories..."
       );
-      const startTime = Date.now();
+      const fetchStartTime = Date.now();
 
       dynamicContext = await githubContextFetcher.fetchEmailContext();
 
-      const endTime = Date.now();
+      const fetchEndTime = Date.now();
       contextMetadata = {
         success: true,
         repositories: 2, // We know we fetch from 2 repos
@@ -476,7 +497,7 @@ export async function POST(request: NextRequest) {
             )
           : 0,
         contextLength: dynamicContext.length,
-        fetchTime: endTime - startTime,
+        fetchTime: fetchEndTime - fetchStartTime,
       };
 
       console.log(
@@ -513,6 +534,44 @@ export async function POST(request: NextRequest) {
       console.warn("⚠️ Supermemory: Failed to fetch memory context:", error);
     }
 
+    // Fetch recent broadcasts from Database for negative constraints
+    let recentBroadcastsContext = "";
+    try {
+      console.log(
+        "🗄️ Database: Fetching recent broadcasts for uniqueness context..."
+      );
+      const recentBroadcasts = await BroadcastService.getRecentBroadcasts(
+        5,
+        formData.market,
+        formData.platform
+      );
+
+      if (recentBroadcasts.length > 0) {
+        recentBroadcastsContext = `
+## RECENTLY GENERATED BROADCASTS (NEGATIVE CONSTRAINTS)
+
+The following emails were recently generated for this market and platform. You MUST NOT duplicate these subject lines or exact content patterns. Use them as a reference for what has already been sent, and ensure your new generation is distinct and unique.
+
+${recentBroadcasts
+  .map(
+    (b, i) => `
+--- Broadcast ${i + 1} ---
+Subject: ${b.title}
+Content Snippet: ${b.content ? b.content.substring(0, 300).replace(/\n/g, " ") : "N/A"}...
+`
+  )
+  .join("\n")}
+`;
+        console.log(
+          `✅ Database: Retrieved ${recentBroadcasts.length} recent broadcasts for context`
+        );
+      } else {
+        console.log("ℹ️ Database: No recent broadcasts found for context");
+      }
+    } catch (error) {
+      console.warn("⚠️ Database: Failed to fetch recent broadcasts:", error);
+    }
+
     // Create user prompt from form data
     const userPrompt = `
 Platform: ${formData.platform}
@@ -538,12 +597,14 @@ Generate an email broadcast based on these specifications.`;
       ? `\n\n=== MCP CONTEXT INTEGRATION ACTIVE ===\nThe following dynamic context was fetched from GitHub repositories via MCP Server tools at ${new Date().toISOString()}:\n\n`
       : `\n\n=== MCP CONTEXT FALLBACK MODE ===\nDynamic context fetching failed. Proceeding with general guidelines.\n\n`;
 
-    const enhancedSystemPrompt = `${systemPrompt}${mcpContextHeader}${dynamicContext}${memoryContext}`;
+    const enhancedSystemPrompt = `${systemPrompt}${mcpContextHeader}${dynamicContext}${memoryContext}${recentBroadcastsContext}`;
 
     console.log(
       `🤖 LLM: Generating email content with ${
         contextMetadata.success ? "MCP context" : "fallback mode"
-      }${memoryContext ? " and Supermemory context" : ""}`
+      }${memoryContext ? ", Supermemory context" : ""}${
+        recentBroadcastsContext ? " and Database history" : ""
+      }`
     );
 
     // Generate content using Vertex AI with enhanced context
@@ -560,6 +621,17 @@ Generate an email broadcast based on these specifications.`;
     // Extract the text from the response
     const text = result.text || "";
 
+    // Extract usage metadata if available
+    const response = result as unknown as {
+      usageMetadata?: {
+        promptTokenCount?: number;
+        candidatesTokenCount?: number;
+      };
+    };
+    const usageMetadata = response.usageMetadata || {};
+    const inputTokens = usageMetadata.promptTokenCount || 0;
+    const outputTokens = usageMetadata.candidatesTokenCount || 0;
+
     // Try to parse the JSON response
     let emailBroadcast;
     try {
@@ -572,6 +644,23 @@ Generate an email broadcast based on these specifications.`;
       }
     } catch {
       console.error("Failed to parse JSON response:", text);
+
+      // Log failed request
+      try {
+        await ApiRequestService.logRequest({
+          session_id: sessionId,
+          request_type: "generate_broadcast",
+          model_used: "gemini-2.5-pro",
+          input_tokens: inputTokens,
+          output_tokens: outputTokens,
+          status: "failed",
+          error_message: "Failed to parse JSON response",
+          response_time_ms: Date.now() - startTime,
+        });
+      } catch (e) {
+        console.error("Failed to log API request", e);
+      }
+
       return NextResponse.json(
         { error: "Error parsing AI response" },
         { status: 500 }
@@ -608,7 +697,55 @@ Generate an email broadcast based on these specifications.`;
       console.warn("⚠️ Supermemory: Error storing email broadcast:", error);
     }
 
-    return NextResponse.json(emailBroadcast);
+    // Store in Database
+    let broadcastId = null;
+    try {
+      const broadcast = await BroadcastService.createBroadcast({
+        session_id: sessionId,
+        title: emailBroadcast.subjectLine1,
+        content: emailBroadcast.emailBody,
+        target_market: formData.market,
+        email_platform: formData.platform,
+        configuration: formData as unknown as Record<string, unknown>,
+        generated_content: emailBroadcast,
+        images: emailBroadcast.imagePrompt
+          ? { prompt: emailBroadcast.imagePrompt }
+          : {},
+        status: "generated",
+      });
+      broadcastId = broadcast.id;
+      console.log(`✅ Database: Broadcast stored with ID ${broadcastId}`);
+    } catch (dbError) {
+      console.error("⚠️ Database: Failed to store broadcast:", dbError);
+    }
+
+    // Log API Request
+    try {
+      await ApiRequestService.logRequest({
+        session_id: sessionId,
+        request_type: "generate_broadcast",
+        model_used: "gemini-2.5-pro",
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        // Estimate cost: $0.000125 / 1k chars input, $0.000375 / 1k chars output (approx for Flash/Pro)
+        // Or use token pricing if known. Gemini 1.5 Pro: Input $3.50/1M, Output $10.50/1M
+        // Gemini 1.5 Flash: Input $0.075/1M, Output $0.30/1M
+        // Assuming Gemini 1.5 Pro pricing for now as "gemini-2.5-pro" might be a placeholder for 1.5 Pro or similar
+        cost: (inputTokens / 1000000) * 3.5 + (outputTokens / 1000000) * 10.5,
+        status: "success",
+        response_time_ms: Date.now() - startTime,
+      });
+    } catch (e) {
+      console.error("Failed to log API request", e);
+    }
+
+    return NextResponse.json({
+      ...emailBroadcast,
+      _meta: {
+        session_id: sessionId,
+        broadcast_id: broadcastId,
+      },
+    });
   } catch (error) {
     console.error("Error generating broadcast:", error);
     return NextResponse.json(
