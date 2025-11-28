@@ -1,24 +1,21 @@
-import { GoogleAuth } from "google-auth-library";
-
-interface ImageGenerationResponse {
-  predictions: Array<{
-    mimeType: string;
-    bytesBase64Encoded: string;
-  }>;
-}
+import {
+  GoogleGenAI,
+  PersonGeneration,
+  SafetyFilterLevel,
+  ImagePromptLanguage,
+} from "@google/genai";
 
 export class VertexAIImageService {
-  private auth: GoogleAuth;
   private readonly projectId: string;
   private readonly locationId: string;
   private readonly modelId: string;
-  private readonly endpoint: string;
+  private vertex: GoogleGenAI;
 
   constructor() {
     // Get project configuration from environment variables
     this.projectId = process.env.GOOGLE_CLOUD_PROJECT || "";
     this.locationId = process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
-    this.modelId = "imagen-4.0-generate-preview-06-06";
+    this.modelId = "imagen-4.0-ultra-generate-001"; // Updated to a stable model supported by the new SDK
 
     if (!this.projectId) {
       throw new Error("GOOGLE_CLOUD_PROJECT environment variable is required");
@@ -27,13 +24,14 @@ export class VertexAIImageService {
     // Configure authentication with Service Account credentials
     const credentials = this.getServiceAccountCredentials();
 
-    this.auth = new GoogleAuth({
-      credentials,
-      scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+    this.vertex = new GoogleGenAI({
+      vertexai: true,
+      project: this.projectId,
+      location: this.locationId,
+      googleAuthOptions: {
+        credentials,
+      },
     });
-
-    // Build the Vertex AI endpoint URL
-    this.endpoint = `https://${this.locationId}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.locationId}/publishers/google/models/${this.modelId}:predict`;
   }
 
   private getServiceAccountCredentials() {
@@ -66,82 +64,33 @@ export class VertexAIImageService {
 
   async generateImage(prompt: string): Promise<string> {
     try {
-      // Get access token using Service Account credentials
-      const client = await this.auth.getClient();
-      const accessTokenResponse = await client.getAccessToken();
-
-      if (!accessTokenResponse.token) {
-        throw new Error("Failed to obtain access token from Service Account");
-      }
-
-      // Prepare the request body for Imagen
-      const requestBody = {
-        instances: [
-          {
-            prompt: prompt,
-          },
-        ],
-        parameters: {
-          aspectRatio: "16:9", // Horizontal aspect ratio for email headers
-          sampleCount: 1,
+      const response = await this.vertex.models.generateImages({
+        model: this.modelId,
+        prompt: prompt,
+        config: {
+          aspectRatio: "16:9",
+          numberOfImages: 1,
           negativePrompt:
             "Disfigurements, six fingers per hand, low realism, lack of coherence, low-resolution images, grainy textures, lack of detail, abnormal appearances, illegible text, and grammatical and syntax errors, non-coherent situations, distorted human and/or animal bodies, figures, and objects; devices with more than one screen; screens popping out of devices, such as laptops and mobile phones; and people belonging to only one ethnicity.",
-          enhancePrompt: false,
-          personGeneration: "allow_all",
-          safetySetting: "block_few",
-          addWatermark: false,
+          personGeneration: PersonGeneration.ALLOW_ALL,
+          safetyFilterLevel: SafetyFilterLevel.BLOCK_ONLY_HIGH,
           includeRaiReason: true,
-          language: "auto",
+          language: ImagePromptLanguage.auto,
         },
-      };
-
-      // Make the API request to Vertex AI
-      const response = await fetch(this.endpoint, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessTokenResponse.token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Vertex AI API Error:", errorText);
-
-        // Handle specific error cases
-        if (response.status === 401) {
-          throw new Error(
-            "Authentication failed. Please check your Service Account credentials."
-          );
-        } else if (response.status === 403) {
-          throw new Error(
-            "Permission denied. Ensure the Service Account has Vertex AI permissions."
-          );
-        } else if (response.status === 429) {
-          throw new Error("API quota exceeded. Please try again later.");
-        } else {
-          throw new Error(
-            `Vertex AI request failed: ${response.status} ${response.statusText} - ${errorText}`
-          );
-        }
-      }
-
-      const result: ImageGenerationResponse = await response.json();
-
-      // Validate response structure
-      if (!result.predictions || result.predictions.length === 0) {
+      if (!response.generatedImages || response.generatedImages.length === 0) {
         throw new Error("No image predictions returned from Vertex AI");
       }
 
-      const prediction = result.predictions[0];
-      if (!prediction.bytesBase64Encoded) {
+      const generatedImage = response.generatedImages[0];
+      if (!generatedImage.image || !generatedImage.image.imageBytes) {
         throw new Error("No image data returned from Vertex AI");
       }
 
       // Return base64 encoded image as data URL
-      const mimeType = prediction.mimeType || "image/png";
-      return `data:${mimeType};base64,${prediction.bytesBase64Encoded}`;
+      const mimeType = generatedImage.image.mimeType || "image/png";
+      return `data:${mimeType};base64,${generatedImage.image.imageBytes}`;
     } catch (error) {
       console.error("Error generating image with Vertex AI:", error);
 
@@ -163,15 +112,12 @@ export class VertexAIImageService {
     authConfigured: boolean;
   }> {
     try {
-      const client = await this.auth.getClient();
-      const token = await client.getAccessToken();
-
       return {
         configured: true,
         projectId: this.projectId,
         location: this.locationId,
         model: this.modelId,
-        authConfigured: !!token.token,
+        authConfigured: true,
       };
     } catch {
       return {

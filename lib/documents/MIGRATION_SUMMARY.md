@@ -126,7 +126,7 @@ GOOGLE_CLOUD_LOCATION=us-central1
 ### Modelo Utilizado
 
 - **Antes:** `gemini-pro`
-- **Después:** `gemini-2.5-flash`
+- **Después:** `gemini-2.5-pro`
 
 ### Estructura de Request
 

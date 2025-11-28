@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { VertexAI } from "@google-cloud/vertexai";
+import { GoogleGenAI } from "@google/genai";
 import { githubContextFetcher } from "@/lib/mcp/github-context-fetcher";
 import { supermemoryClient } from "@/lib/mcp/supermemory-client-direct";
 
 // Initialize Vertex AI with service account credentials or ADC
 // This will try service account credentials first, then fall back to ADC
-let vertex: VertexAI;
+let vertex: GoogleGenAI;
 
 if (
   process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
@@ -17,7 +17,8 @@ if (
     private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
   };
 
-  vertex = new VertexAI({
+  vertex = new GoogleGenAI({
+    vertexai: true,
     project: process.env.GOOGLE_CLOUD_PROJECT || "",
     location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
     googleAuthOptions: {
@@ -26,16 +27,12 @@ if (
   });
 } else {
   // Fall back to Application Default Credentials (ADC)
-  vertex = new VertexAI({
+  vertex = new GoogleGenAI({
+    vertexai: true,
     project: process.env.GOOGLE_CLOUD_PROJECT || "",
     location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
   });
 }
-
-// Get the generative model
-const model = vertex.getGenerativeModel({
-  model: "gemini-2.5-flash",
-});
 
 // System prompt for email broadcast generation
 const systemPrompt = `# System Prompt
@@ -550,7 +547,8 @@ Generate an email broadcast based on these specifications.`;
     );
 
     // Generate content using Vertex AI with enhanced context
-    const result = await model.generateContent({
+    const result = await vertex.models.generateContent({
+      model: "gemini-2.5-pro",
       contents: [
         {
           role: "user",
@@ -560,8 +558,7 @@ Generate an email broadcast based on these specifications.`;
     });
 
     // Extract the text from the response
-    const text =
-      result.response?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const text = result.text || "";
 
     // Try to parse the JSON response
     let emailBroadcast;

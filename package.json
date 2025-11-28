@@ -13,7 +13,7 @@
     "mcp:server": "node lib/mcp/dist/github-context-server.js"
   },
   "dependencies": {
-    "@google-cloud/vertexai": "^1.10.0",
+    "@google/genai": "^1.30.0",
     "@modelcontextprotocol/sdk": "^1.17.3",
     "@octokit/app": "^16.0.1",
     "@octokit/auth-app": "^8.0.2",
@@ -24,7 +24,6 @@
     "@types/marked": "^5.0.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
-    "google-auth-library": "^10.2.1",
     "lucide-react": "^0.540.0",
     "marked": "^16.2.0",
     "next": "^15.4.7",
