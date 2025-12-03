@@ -509,6 +509,19 @@ export default function Home() {
     setSpamCheckLoading(true);
     setSpamCheckResult(null);
 
+    // Client-side timeout to ensure loading state is reset
+    const timeoutId = setTimeout(() => {
+      setSpamCheckLoading(false);
+      setSpamCheckResult({
+        success: false,
+        score: -1,
+        status: "fail",
+        summary: "El análisis de spam tardó demasiado. Por favor, intenta de nuevo.",
+        rules: [],
+        error: "Request timed out",
+      });
+    }, 35000); // 35 seconds (slightly longer than server timeout)
+
     try {
       const response = await fetch("/api/spam-check", {
         method: "POST",
@@ -522,6 +535,8 @@ export default function Home() {
         }),
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
         throw new Error("Failed to check spam score");
       }
@@ -529,6 +544,7 @@ export default function Home() {
       const data: SpamCheckApiResponse = await response.json();
       setSpamCheckResult(data);
     } catch (err) {
+      clearTimeout(timeoutId);
       console.error("Error checking spam score:", err);
       setSpamCheckResult({
         success: false,
@@ -539,6 +555,7 @@ export default function Home() {
         error: err instanceof Error ? err.message : "Error desconocido",
       });
     } finally {
+      clearTimeout(timeoutId);
       setSpamCheckLoading(false);
     }
   };

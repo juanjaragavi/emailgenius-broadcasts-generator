@@ -131,6 +131,10 @@ export async function checkSpamScore(
     // Build the raw email format
     const rawEmail = buildRawEmail(content, subjectLine, previewText);
 
+    // Create an AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
     // Call Postmark SpamCheck API
     const response = await fetch(POSTMARK_SPAMCHECK_URL, {
       method: "POST",
@@ -142,7 +146,10 @@ export async function checkSpamScore(
         email: rawEmail,
         options: "long", // Get detailed report
       }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(
@@ -185,6 +192,18 @@ export async function checkSpamScore(
     };
   } catch (error) {
     console.error("[SpamCheck] Error checking spam score:", error);
+
+    // Handle abort/timeout error specifically
+    if (error instanceof Error && error.name === "AbortError") {
+      return {
+        success: false,
+        score: -1,
+        status: "fail",
+        summary: "Spam analysis timed out. Please try again.",
+        rules: [],
+        error: "Request timed out after 30 seconds",
+      };
+    }
 
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
