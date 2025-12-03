@@ -30,12 +30,15 @@ import {
   Download,
   History,
   Clock,
+  ShieldCheck,
 } from "lucide-react";
 import { marked } from "marked";
 import Image from "next/image";
 import { FileUpload } from "@/components/ui/file-upload";
 import { PngUpload } from "@/components/ui/png-upload";
 import { Header } from "@/components/ui/header";
+import { SpamScoreDisplay } from "@/components/spam-score-display";
+import { SpamCheckApiResponse } from "@/types/spam-check";
 
 interface FormData {
   platform: "ActiveCampaign" | "ConvertKit" | "";
@@ -95,6 +98,11 @@ export default function Home() {
   const [signatureImageError, setSignatureImageError] = useState<string | null>(
     null
   );
+
+  // Spam check state
+  const [spamCheckResult, setSpamCheckResult] =
+    useState<SpamCheckApiResponse | null>(null);
+  const [spamCheckLoading, setSpamCheckLoading] = useState(false);
 
   const { register, handleSubmit, watch, setValue, reset } = useForm<FormData>({
     defaultValues: {
@@ -321,6 +329,7 @@ export default function Home() {
     setImageError(null);
     setSignatureImageUrl("");
     setSignatureImageError(null);
+    setSpamCheckResult(null);
 
     try {
       const response = await fetch("/api/generate-broadcast", {
@@ -458,6 +467,8 @@ export default function Home() {
     setSignatureImageUrl("");
     setSignatureImageError(null);
     setSignatureImageLoading(false);
+    setSpamCheckResult(null);
+    setSpamCheckLoading(false);
 
     // Smooth scroll to top
     window.scrollTo({
@@ -483,6 +494,47 @@ export default function Home() {
       document.body.removeChild(a);
     } catch (error) {
       console.error("Error downloading image:", error);
+    }
+  };
+
+  // Function to check spam score
+  const checkSpamScore = async () => {
+    if (!result?.emailBody) return;
+
+    setSpamCheckLoading(true);
+    setSpamCheckResult(null);
+
+    try {
+      const response = await fetch("/api/spam-check", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content: result.emailBody,
+          subjectLine: result.subjectLine1,
+          previewText: result.previewText,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to check spam score");
+      }
+
+      const data: SpamCheckApiResponse = await response.json();
+      setSpamCheckResult(data);
+    } catch (err) {
+      console.error("Error checking spam score:", err);
+      setSpamCheckResult({
+        success: false,
+        score: -1,
+        status: "fail",
+        summary: "Error al analizar el puntaje de spam",
+        rules: [],
+        error: err instanceof Error ? err.message : "Error desconocido",
+      });
+    } finally {
+      setSpamCheckLoading(false);
     }
   };
 
@@ -1113,6 +1165,46 @@ export default function Home() {
                           </div>
                         </div>
                       )}
+
+                      {/* Spam Score Analysis Section */}
+                      <div className="space-y-4 border-t pt-6">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium text-gray-700">
+                            Análisis de Spam
+                          </Label>
+                        </div>
+
+                        {/* Spam Check Button - show when no result yet */}
+                        {!spamCheckResult && !spamCheckLoading && (
+                          <Button
+                            onClick={checkSpamScore}
+                            variant="outline"
+                            className="w-full bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 text-green-700 border-green-200"
+                          >
+                            <ShieldCheck className="h-4 w-4 mr-2" />
+                            Analizar Puntaje de Spam
+                          </Button>
+                        )}
+
+                        {/* Spam Score Display */}
+                        <SpamScoreDisplay
+                          result={spamCheckResult}
+                          isLoading={spamCheckLoading}
+                        />
+
+                        {/* Re-check button after initial check */}
+                        {spamCheckResult && !spamCheckLoading && (
+                          <Button
+                            onClick={checkSpamScore}
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-gray-600"
+                          >
+                            <ShieldCheck className="h-4 w-4 mr-2" />
+                            Volver a Analizar
+                          </Button>
+                        )}
+                      </div>
 
                       <Button
                         onClick={() => {
