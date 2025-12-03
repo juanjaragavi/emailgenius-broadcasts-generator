@@ -165,7 +165,7 @@ function injectHeroImage(html: string, imageUrl: string): string {
 
   // Strategy: Find the email-container div and inject right after it opens
   // This places the image at the very top of the email content
-  
+
   // First try: inject right after email-container div
   if (/<div class="email-container">/.test(html)) {
     return html.replace(
@@ -188,65 +188,87 @@ function injectHeroImage(html: string, imageUrl: string): string {
 
 /**
  * Inject handwritten signature image into the HTML content
- * Places the signature above the CTA button, after the sign-off
+ * Places the signature between the sign-off greeting and the sender's name
+ * Creates a proper vertical layout: Greeting -> Signature Image -> Name/Title
  */
-function injectSignatureImage(html: string, signatureUrl: string, signatureName?: string): string {
+function injectSignatureImage(
+  html: string,
+  signatureUrl: string,
+  signatureName?: string
+): string {
   if (!html || !signatureUrl) return html;
 
-  // Create signature image HTML
-  const signatureHtml = `
-    <table align="left" width="200" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin: 16px 0;">
-      <tbody>
-        <tr>
-          <td align="left" style="padding: 0;">
-            <img 
-              src="${signatureUrl}" 
-              alt="${signatureName || 'Signature'}" 
-              width="200"
-              style="max-width: 200px; width: 200px; height: auto; display: block; border: 0;"
-            />
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  `;
+  // Create signature image HTML - uses display:block to force vertical stacking
+  const signatureImgHtml = `
+    <img 
+      src="${signatureUrl}" 
+      alt="${signatureName || "Signature"}" 
+      width="180"
+      style="max-width: 180px; width: 180px; height: auto; display: block; border: 0; margin: 12px 0 8px 0;"
+    />`;
 
-  // Strategy: Find common sign-off patterns and inject signature after them
-  // Look for patterns like "Best regards," or "Sincerely," followed by a name
-  
-  // Pattern 1: Look for "Best regards" or similar, then inject before the next paragraph/div
-  const signOffPatterns = [
-    /(Best regards,?<br\s*\/?>)/i,
-    /(Sincerely,?<br\s*\/?>)/i,
-    /(Kind regards,?<br\s*\/?>)/i,
-    /(Warm regards,?<br\s*\/?>)/i,
-    /(Saludos,?<br\s*\/?>)/i,
-    /(Atentamente,?<br\s*\/?>)/i,
-    /(Cordialmente,?<br\s*\/?>)/i,
+  // Strategy: Find sign-off patterns followed by name, and insert signature between them
+
+  // Pattern 1: "Sincerely,<br><br>Name" or "Best regards,<br><br>Name"
+  // Match sign-off followed by line breaks and then text (the name)
+  const signOffWithNamePatterns = [
+    /(Sincerely,?)(<br\s*\/?>\s*<br\s*\/?>)/gi,
+    /(Best regards,?)(<br\s*\/?>\s*<br\s*\/?>)/gi,
+    /(Kind regards,?)(<br\s*\/?>\s*<br\s*\/?>)/gi,
+    /(Warm regards,?)(<br\s*\/?>\s*<br\s*\/?>)/gi,
+    /(Saludos,?)(<br\s*\/?>\s*<br\s*\/?>)/gi,
+    /(Atentamente,?)(<br\s*\/?>\s*<br\s*\/?>)/gi,
+    /(Cordialmente,?)(<br\s*\/?>\s*<br\s*\/?>)/gi,
   ];
 
-  for (const pattern of signOffPatterns) {
+  for (const pattern of signOffWithNamePatterns) {
     if (pattern.test(html)) {
-      return html.replace(pattern, `$1\n${signatureHtml}`);
+      // Insert signature after the sign-off and before the name
+      return html.replace(pattern, `$1<br>${signatureImgHtml}`);
     }
   }
 
-  // Pattern 2: Look for the CTA button and inject before it
-  const ctaButtonPattern = /(<table[^>]*align="center"[^>]*>[\s\S]*?<a[^>]*style="[^"]*background-color)/i;
-  if (ctaButtonPattern.test(html)) {
-    return html.replace(ctaButtonPattern, `${signatureHtml}\n$1`);
+  // Pattern 2: Single line break after sign-off
+  const signOffSingleBreakPatterns = [
+    /(Sincerely,?)(<br\s*\/?>)(?!\s*<br)/gi,
+    /(Best regards,?)(<br\s*\/?>)(?!\s*<br)/gi,
+    /(Kind regards,?)(<br\s*\/?>)(?!\s*<br)/gi,
+    /(Warm regards,?)(<br\s*\/?>)(?!\s*<br)/gi,
+    /(Saludos,?)(<br\s*\/?>)(?!\s*<br)/gi,
+    /(Atentamente,?)(<br\s*\/?>)(?!\s*<br)/gi,
+    /(Cordialmente,?)(<br\s*\/?>)(?!\s*<br)/gi,
+  ];
+
+  for (const pattern of signOffSingleBreakPatterns) {
+    if (pattern.test(html)) {
+      return html.replace(pattern, `$1<br>${signatureImgHtml}`);
+    }
   }
 
-  // Pattern 3: Look for department signatures like "Shipping & Fulfillment Dept."
-  const deptPattern = /(<strong>[^<]*(?:Dept\.|Department|Team|Division)[^<]*<\/strong>)/i;
+  // Pattern 3: Look for the sender's name directly and inject before it
+  // This handles cases where name appears without a sign-off greeting
+  if (signatureName) {
+    const namePattern = new RegExp(
+      `(<br\\s*\\/?>\\s*)(${signatureName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+      "i"
+    );
+    if (namePattern.test(html)) {
+      return html.replace(namePattern, `<br>${signatureImgHtml}$2`);
+    }
+  }
+
+  // Pattern 4: Look for department signatures and inject before the name
+  const deptPattern =
+    /(<br\s*\/?>)(\s*)(<strong>[^<]*(?:Dept\.|Department|Team|Division|Services)[^<]*<\/strong>)/i;
   if (deptPattern.test(html)) {
-    return html.replace(deptPattern, `${signatureHtml}\n$1`);
+    return html.replace(deptPattern, `<br>${signatureImgHtml}$2$3`);
   }
 
-  // Fallback: inject before the footer section
-  const footerPattern = /(<section[^>]*style="[^"]*background-color:\s*#1e3a5f)/i;
-  if (footerPattern.test(html)) {
-    return html.replace(footerPattern, `${signatureHtml}\n$1`);
+  // Fallback: inject before the CTA button
+  const ctaButtonPattern =
+    /(<table[^>]*align="center"[^>]*>[\s\S]*?<a[^>]*style="[^"]*background-color)/i;
+  if (ctaButtonPattern.test(html)) {
+    return html.replace(ctaButtonPattern, `${signatureImgHtml}\n$1`);
   }
 
   return html;
@@ -341,8 +363,8 @@ export function EmailPreviewPanel({
       // Inject handwritten signature if available
       if (signatureImageUrl) {
         renderedHtml = injectSignatureImage(
-          renderedHtml, 
-          signatureImageUrl, 
+          renderedHtml,
+          signatureImageUrl,
           broadcast?.signatureName
         );
       }
@@ -355,7 +377,16 @@ export function EmailPreviewPanel({
     } finally {
       setIsLoading(false);
     }
-  }, [processedBroadcast, emailType, platform, market, viewport, imageUrl, signatureImageUrl, broadcast?.signatureName]);
+  }, [
+    processedBroadcast,
+    emailType,
+    platform,
+    market,
+    viewport,
+    imageUrl,
+    signatureImageUrl,
+    broadcast?.signatureName,
+  ]);
 
   // Fetch on open and when broadcast changes
   useEffect(() => {

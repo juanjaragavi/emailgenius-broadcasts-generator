@@ -516,7 +516,8 @@ export default function Home() {
         success: false,
         score: -1,
         status: "fail",
-        summary: "El análisis de spam tardó demasiado. Por favor, intenta de nuevo.",
+        summary:
+          "El análisis de spam tardó demasiado. Por favor, intenta de nuevo.",
         rules: [],
         error: "Request timed out",
       });
