@@ -1362,6 +1362,7 @@ export default function Home() {
             : null
         }
         imageUrl={imageUrl || undefined}
+        signatureImageUrl={signatureImageUrl || undefined}
       />
     </>
   );

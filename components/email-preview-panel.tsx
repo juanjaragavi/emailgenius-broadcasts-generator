@@ -46,6 +46,8 @@ export interface EmailPreviewPanelProps {
     ctaButtonText: string;
     destinationUrl?: string;
     fromName?: string;
+    signatureName?: string;
+    signatureTitle?: string;
   } | null;
   /** Email type for template selection */
   emailType: string;
@@ -61,6 +63,8 @@ export interface EmailPreviewPanelProps {
   } | null;
   /** Generated header image URL */
   imageUrl?: string;
+  /** Generated handwritten signature image URL */
+  signatureImageUrl?: string;
 }
 
 // ============================================================================
@@ -182,6 +186,72 @@ function injectHeroImage(html: string, imageUrl: string): string {
   return heroImageHtml + html;
 }
 
+/**
+ * Inject handwritten signature image into the HTML content
+ * Places the signature above the CTA button, after the sign-off
+ */
+function injectSignatureImage(html: string, signatureUrl: string, signatureName?: string): string {
+  if (!html || !signatureUrl) return html;
+
+  // Create signature image HTML
+  const signatureHtml = `
+    <table align="left" width="200" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin: 16px 0;">
+      <tbody>
+        <tr>
+          <td align="left" style="padding: 0;">
+            <img 
+              src="${signatureUrl}" 
+              alt="${signatureName || 'Signature'}" 
+              width="200"
+              style="max-width: 200px; width: 200px; height: auto; display: block; border: 0;"
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+
+  // Strategy: Find common sign-off patterns and inject signature after them
+  // Look for patterns like "Best regards," or "Sincerely," followed by a name
+  
+  // Pattern 1: Look for "Best regards" or similar, then inject before the next paragraph/div
+  const signOffPatterns = [
+    /(Best regards,?<br\s*\/?>)/i,
+    /(Sincerely,?<br\s*\/?>)/i,
+    /(Kind regards,?<br\s*\/?>)/i,
+    /(Warm regards,?<br\s*\/?>)/i,
+    /(Saludos,?<br\s*\/?>)/i,
+    /(Atentamente,?<br\s*\/?>)/i,
+    /(Cordialmente,?<br\s*\/?>)/i,
+  ];
+
+  for (const pattern of signOffPatterns) {
+    if (pattern.test(html)) {
+      return html.replace(pattern, `$1\n${signatureHtml}`);
+    }
+  }
+
+  // Pattern 2: Look for the CTA button and inject before it
+  const ctaButtonPattern = /(<table[^>]*align="center"[^>]*>[\s\S]*?<a[^>]*style="[^"]*background-color)/i;
+  if (ctaButtonPattern.test(html)) {
+    return html.replace(ctaButtonPattern, `${signatureHtml}\n$1`);
+  }
+
+  // Pattern 3: Look for department signatures like "Shipping & Fulfillment Dept."
+  const deptPattern = /(<strong>[^<]*(?:Dept\.|Department|Team|Division)[^<]*<\/strong>)/i;
+  if (deptPattern.test(html)) {
+    return html.replace(deptPattern, `${signatureHtml}\n$1`);
+  }
+
+  // Fallback: inject before the footer section
+  const footerPattern = /(<section[^>]*style="[^"]*background-color:\s*#1e3a5f)/i;
+  if (footerPattern.test(html)) {
+    return html.replace(footerPattern, `${signatureHtml}\n$1`);
+  }
+
+  return html;
+}
+
 export function EmailPreviewPanel({
   isOpen,
   onClose,
@@ -191,6 +261,7 @@ export function EmailPreviewPanel({
   market,
   spamCheckResult,
   imageUrl,
+  signatureImageUrl,
 }: EmailPreviewPanelProps) {
   // State
   const [viewMode, setViewMode] = useState<ViewMode>("html");
@@ -267,6 +338,15 @@ export function EmailPreviewPanel({
         renderedHtml = injectHeroImage(renderedHtml, imageUrl);
       }
 
+      // Inject handwritten signature if available
+      if (signatureImageUrl) {
+        renderedHtml = injectSignatureImage(
+          renderedHtml, 
+          signatureImageUrl, 
+          broadcast?.signatureName
+        );
+      }
+
       setHtmlContent(renderedHtml);
       setPlainTextContent(data.plainText);
     } catch (err) {
@@ -275,7 +355,7 @@ export function EmailPreviewPanel({
     } finally {
       setIsLoading(false);
     }
-  }, [processedBroadcast, emailType, platform, market, viewport, imageUrl]);
+  }, [processedBroadcast, emailType, platform, market, viewport, imageUrl, signatureImageUrl, broadcast?.signatureName]);
 
   // Fetch on open and when broadcast changes
   useEffect(() => {
