@@ -31,6 +31,7 @@ import {
   History,
   Clock,
   ShieldCheck,
+  Eye,
 } from "lucide-react";
 import { marked } from "marked";
 import Image from "next/image";
@@ -38,6 +39,7 @@ import { FileUpload } from "@/components/ui/file-upload";
 import { PngUpload } from "@/components/ui/png-upload";
 import { Header } from "@/components/ui/header";
 import { SpamScoreDisplay } from "@/components/spam-score-display";
+import { EmailPreviewPanel } from "@/components/email-preview-panel";
 import { SpamCheckApiResponse } from "@/types/spam-check";
 
 interface FormData {
@@ -103,6 +105,9 @@ export default function Home() {
   const [spamCheckResult, setSpamCheckResult] =
     useState<SpamCheckApiResponse | null>(null);
   const [spamCheckLoading, setSpamCheckLoading] = useState(false);
+
+  // Email preview panel state
+  const [showPreviewPanel, setShowPreviewPanel] = useState(false);
 
   const { register, handleSubmit, watch, setValue, reset } = useForm<FormData>({
     defaultValues: {
@@ -1166,6 +1171,27 @@ export default function Home() {
                         </div>
                       )}
 
+                      {/* HTML Preview Section */}
+                      <div className="space-y-4 border-t pt-6">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium text-gray-700">
+                            Vista Previa HTML
+                          </Label>
+                        </div>
+                        <Button
+                          onClick={() => setShowPreviewPanel(true)}
+                          variant="outline"
+                          className="w-full bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 text-blue-700 border-blue-200"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Abrir Vista Previa del Email
+                        </Button>
+                        <p className="text-xs text-gray-500 text-center">
+                          Visualiza el email renderizado con plantillas React
+                          Email optimizadas para clientes de correo
+                        </p>
+                      </div>
+
                       {/* Spam Score Analysis Section */}
                       <div className="space-y-4 border-t pt-6">
                         <div className="flex items-center justify-between">
@@ -1298,6 +1324,28 @@ export default function Home() {
           </section>
         </div>
       </div>
+
+      {/* Email Preview Panel */}
+      <EmailPreviewPanel
+        isOpen={showPreviewPanel}
+        onClose={() => setShowPreviewPanel(false)}
+        broadcast={result}
+        emailType={emailType || "product"}
+        platform={
+          (platform as "ConvertKit" | "ActiveCampaign") || "ActiveCampaign"
+        }
+        market={(market as "USA" | "UK" | "Mexico") || "USA"}
+        spamCheckResult={
+          spamCheckResult
+            ? {
+                score: spamCheckResult.score,
+                status: spamCheckResult.status,
+                summary: spamCheckResult.summary,
+              }
+            : null
+        }
+        imageUrl={imageUrl || undefined}
+      />
     </>
   );
 }
