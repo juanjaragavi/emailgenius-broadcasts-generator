@@ -5,6 +5,7 @@ import { supermemoryClient } from "@/lib/mcp/supermemory-client-direct";
 import { SessionService } from "@/lib/database/services/session.service";
 import { BroadcastService } from "@/lib/database/services/broadcast.service";
 import { ApiRequestService } from "@/lib/database/services/api-request.service";
+import { ILBroadcastService } from "@/lib/database/services/il-broadcast.service";
 
 // Initialize Vertex AI with service account credentials or ADC
 // This will try service account credentials first, then fall back to ADC
@@ -283,6 +284,15 @@ This system uses **Supermemory** - a universal memory layer for AI - to maintain
 - **BALANCE** uniqueness with effectiveness based on successful patterns
 
 The memory context will appear as "SUPERMEMORY CONTEXT FOR UNIQUENESS" sections in your prompt when available.
+
+### Database & IL Broadcasts Dataset Awareness
+
+You may also receive one or more database-derived context sections. Treat them as **negative constraints** to avoid repetition and spam risk:
+
+- **RECENTLY GENERATED BROADCASTS (NEGATIVE CONSTRAINTS):** Previously generated emails for the same market/platform. Do **not** reuse their subject lines, preview text, CTA phrasing, or body structure.
+- **IL DATASET REFERENCE (DO NOT REPEAT):** Records sourced from the \`il_broadcasts\` table. Use them only to diversify; avoid copying their wording, topics, and layouts.
+
+Always generate fresh, differentiated copy that does not overlap with any provided database context.
 
 ## Output Formatting
 
@@ -572,6 +582,67 @@ Content Snippet: ${b.content ? b.content.substring(0, 300).replace(/\n/g, " ") :
       console.warn("⚠️ Database: Failed to fetch recent broadcasts:", error);
     }
 
+    // Fetch IL broadcasts dataset for negative constraints
+    let ilBroadcastsContext = "";
+    try {
+      console.log(
+        "🗄️ Database: Fetching IL broadcasts dataset for uniqueness context..."
+      );
+
+      const ilBroadcasts = await ILBroadcastService.getRecentBroadcasts({
+        limit: 5,
+        market: formData.market,
+        platform: formData.platform,
+      });
+
+      if (ilBroadcasts.length > 0) {
+        const serializeField = (value: unknown) =>
+          typeof value === "string"
+            ? value
+            : value === undefined || value === null
+              ? ""
+              : String(value);
+
+        ilBroadcastsContext = `
+## IL DATASET REFERENCE (DO NOT REPEAT)
+
+The following broadcasts exist in the il_broadcasts dataset. Use them only as negative examples. Do NOT reuse their subject lines, preheaders, CTA phrases, or body wording. Generate fresh, distinct content.
+
+${ilBroadcasts
+  .map((b, i) => {
+    const subject = serializeField(b["subject"] || b["title"]);
+    const preheader = serializeField(
+      b["preheader"] || b["preview_text"] || b["preview"]
+    );
+    const body = serializeField(b["email_body"] || b["body"] || b["content"]);
+    const spamScore = serializeField(b["spam_score"]);
+    const marketTag = serializeField(
+      b["market"] || b["country"] || b["locale"]
+    );
+    const platformTag = serializeField(b["platform"] || b["email_platform"]);
+    const timestamp = serializeField(
+      b["created_at"] || b["sent_at"] || b["updated_at"]
+    );
+    const snippet = body ? body.substring(0, 300).replace(/\n/g, " ") : "";
+
+    return `--- IL Broadcast ${i + 1} ---\n${subject ? `Subject: ${subject}\n` : ""}${preheader ? `Preheader: ${preheader}\n` : ""}${marketTag || platformTag ? `Market/Platform: ${marketTag} ${platformTag}\n` : ""}${spamScore ? `Spam Score: ${spamScore}\n` : ""}${timestamp ? `Timestamp: ${timestamp}\n` : ""}${snippet ? `Content Snippet: ${snippet}...\n` : ""}`;
+  })
+  .join("\n")}
+`;
+
+        console.log(
+          `✅ Database: Retrieved ${ilBroadcasts.length} IL broadcasts for context`
+        );
+      } else {
+        console.log("ℹ️ Database: No IL broadcasts found for context");
+      }
+    } catch (error) {
+      console.warn(
+        "⚠️ Database: Failed to fetch IL broadcasts dataset:",
+        error
+      );
+    }
+
     // Create user prompt from form data
     const userPrompt = `
 Platform: ${formData.platform}
@@ -597,14 +668,14 @@ Generate an email broadcast based on these specifications.`;
       ? `\n\n=== MCP CONTEXT INTEGRATION ACTIVE ===\nThe following dynamic context was fetched from GitHub repositories via MCP Server tools at ${new Date().toISOString()}:\n\n`
       : `\n\n=== MCP CONTEXT FALLBACK MODE ===\nDynamic context fetching failed. Proceeding with general guidelines.\n\n`;
 
-    const enhancedSystemPrompt = `${systemPrompt}${mcpContextHeader}${dynamicContext}${memoryContext}${recentBroadcastsContext}`;
+    const enhancedSystemPrompt = `${systemPrompt}${mcpContextHeader}${dynamicContext}${memoryContext}${recentBroadcastsContext}${ilBroadcastsContext}`;
 
     console.log(
       `🤖 LLM: Generating email content with ${
         contextMetadata.success ? "MCP context" : "fallback mode"
       }${memoryContext ? ", Supermemory context" : ""}${
         recentBroadcastsContext ? " and Database history" : ""
-      }`
+      }${ilBroadcastsContext ? " and IL dataset" : ""}`
     );
 
     // Generate content using Vertex AI with enhanced context
