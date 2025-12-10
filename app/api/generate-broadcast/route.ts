@@ -51,7 +51,9 @@ You will adhere to user guidelines and draw inspiration from provided context, s
 
 ### Content Generation
 
-- Create concise and engaging email copy, adapting length as needed for clarity and impact.
+- **Create concise and engaging email copy**, prioritizing brevity and clarity. Avoid unnecessary fluff or filler words.
+- **Paragraph Structure**: Use short, punchy paragraphs (1-2 sentences max).
+- **Token Density**: Keep the overall word count low unless "Extended" length is requested.
 - Focus on financial product recommendations and benefits without revealing excessive specific details (like exact rates or terms, unless explicitly instructed and safe to do so).
 - Use direct, action-oriented language appropriate for the specific offer (e.g., urgent for emergencies, professional for business, informative for tracking).
 - Include one or more call-to-action (CTA) buttons as appropriate for the offer (e.g., multiple buttons for multiple offers, single button for a specific action).
@@ -451,6 +453,7 @@ interface FormData {
   emailType: string;
   market: "USA" | "UK" | "Mexico";
   imageType: string;
+  contentLength?: "Concise" | "Standard" | "Extended";
   url?: string;
   additionalInstructions?: string;
   includeHandwrittenSignature?: boolean;
@@ -643,17 +646,37 @@ ${ilBroadcasts
       );
     }
 
+    // Determine content length instruction
+    let lengthInstruction = "";
+    switch (formData.contentLength) {
+      case "Concise":
+        lengthInstruction =
+          "Content Length: Concise (Breve) - Keep the email body very short, direct, and to the point. Use minimal text to convey the message. Max 150 words.";
+        break;
+      case "Extended":
+        lengthInstruction =
+          "Content Length: Extended (Detallado) - Provide more detailed information and context. You can use more paragraphs and bullet points to explain the offer or update thoroughly. Max 300 words.";
+        break;
+      case "Standard":
+      default:
+        lengthInstruction =
+          "Content Length: Standard - Balance brevity with sufficient detail. Max 200 words.";
+        break;
+    }
+
     // Create user prompt from form data
     const userPrompt = `
 Platform: ${formData.platform}
 Email Type: ${formData.emailType}
 Market: ${formData.market}
 Image Type: ${formData.imageType}
+${lengthInstruction}
 ${formData.url ? `URL: ${formData.url}` : ""}
 ${
   formData.additionalInstructions
     ? `Additional Instructions: ${formData.additionalInstructions}`
     : ""
+}   : ""
 }
 ${
   formData.includeHandwrittenSignature

@@ -47,6 +47,7 @@ interface FormData {
   emailType: string;
   market: "USA" | "UK" | "Mexico" | "";
   imageType: string;
+  contentLength: "Concise" | "Standard" | "Extended";
   url?: string;
   additionalInstructions?: string;
   includeHandwrittenSignature?: boolean;
@@ -115,6 +116,7 @@ export default function Home() {
       market: "",
       emailType: "",
       imageType: "",
+      contentLength: "Concise",
       includeHandwrittenSignature: false,
     },
   });
@@ -457,6 +459,7 @@ export default function Home() {
       market: "",
       emailType: "",
       imageType: "",
+      contentLength: "Concise",
       url: "",
       additionalInstructions: "",
       includeHandwrittenSignature: false,
@@ -741,6 +744,33 @@ export default function Home() {
                             Seguimiento de Envío
                           </SelectItem>
                           <SelectItem value="graphic">Gráfico</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Content Length */}
+                    <div className="space-y-2">
+                      <Label htmlFor="contentLength">Longitud del Contenido</Label>
+                      <Select
+                        value={watch("contentLength") || "Concise"}
+                        onValueChange={(value) =>
+                          setValue(
+                            "contentLength",
+                            value as FormData["contentLength"]
+                          )
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona la longitud" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Concise">
+                            Conciso (Breve)
+                          </SelectItem>
+                          <SelectItem value="Standard">Estándar</SelectItem>
+                          <SelectItem value="Extended">
+                            Extendido (Detallado)
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
