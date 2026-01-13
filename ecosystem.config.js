@@ -35,6 +35,15 @@ module.exports = {
         GITHUB_TOKEN: "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",
         SUPERMEMORY_API_KEY:
           "sm_xbEChqoeQzCd4ygHEKpxpf_VGjUxOZJEoCRIHCTJiYEBOGkueVBPLNbcAurZixNBNveFrOGENpRJCvKNHrEDdzc",
+        // Database Configuration
+        DB_HOST: "34.16.99.221",
+        DB_PORT: "5432",
+        DB_NAME: "emailgenius",
+        DB_USER: "postgres",
+        DB_PASSWORD: "Leyton@19564984",
+        DB_CONNECTION_NAME: "absolute-brook-452020-d5:us-central1:emailgenius-broadcasts-db",
+        DATABASE_URL: "postgresql://postgres:Leyton@19564984@34.16.99.221:5432/emailgenius?schema=public",
+
       },
       env_production: {
         NODE_ENV: "production",
@@ -61,6 +70,15 @@ module.exports = {
         GITHUB_TOKEN: "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",
         SUPERMEMORY_API_KEY:
           "sm_xbEChqoeQzCd4ygHEKpxpf_VGjUxOZJEoCRIHCTJiYEBOGkueVBPLNbcAurZixNBNveFrOGENpRJCvKNHrEDdzc",
+        // Database Configuration
+        DB_HOST: "34.16.99.221",
+        DB_PORT: "5432",
+        DB_NAME: "emailgenius",
+        DB_USER: "postgres",
+        DB_PASSWORD: "Leyton@19564984",
+        DB_CONNECTION_NAME: "absolute-brook-452020-d5:us-central1:emailgenius-broadcasts-db",
+        DATABASE_URL: "postgresql://postgres:Leyton@19564984@34.16.99.221:5432/emailgenius?schema=public",
+
       },
       error_file: "/var/log/pm2/emailgenius-broadcasts-error.log",
       out_file: "/var/log/pm2/emailgenius-broadcasts-out.log",

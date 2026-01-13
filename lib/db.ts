@@ -8,9 +8,9 @@ const poolConfig: PoolConfig = {
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  max: 10, // Max 10 concurrent connections for Next.js serverless
-  idleTimeoutMillis: 30000, // 30 seconds
-  connectionTimeoutMillis: 10000, // 10 seconds
+  max: 20, // Max 10 concurrent connections for Next.js serverless
+  idleTimeoutMillis: 60000, // 30 seconds
+  connectionTimeoutMillis: 30000, // 10 seconds
   ssl: {
     rejectUnauthorized: false, // For Cloud SQL public IP, we might need this if not using Cloud SQL Proxy
   },
