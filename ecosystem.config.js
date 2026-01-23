@@ -41,9 +41,10 @@ module.exports = {
         DB_NAME: "emailgenius",
         DB_USER: "postgres",
         DB_PASSWORD: "Leyton@19564984",
-        DB_CONNECTION_NAME: "absolute-brook-452020-d5:us-central1:emailgenius-broadcasts-db",
-        DATABASE_URL: "postgresql://postgres:Leyton@19564984@34.16.99.221:5432/emailgenius?schema=public",
-
+        DB_CONNECTION_NAME:
+          "absolute-brook-452020-d5:us-central1:emailgenius-broadcasts-db",
+        DATABASE_URL:
+          "postgresql://postgres:Leyton@19564984@34.16.99.221:5432/emailgenius?schema=public",
       },
       env_production: {
         NODE_ENV: "production",
@@ -76,9 +77,10 @@ module.exports = {
         DB_NAME: "emailgenius",
         DB_USER: "postgres",
         DB_PASSWORD: "Leyton@19564984",
-        DB_CONNECTION_NAME: "absolute-brook-452020-d5:us-central1:emailgenius-broadcasts-db",
-        DATABASE_URL: "postgresql://postgres:Leyton@19564984@34.16.99.221:5432/emailgenius?schema=public",
-
+        DB_CONNECTION_NAME:
+          "absolute-brook-452020-d5:us-central1:emailgenius-broadcasts-db",
+        DATABASE_URL:
+          "postgresql://postgres:Leyton@19564984@34.16.99.221:5432/emailgenius?schema=public",
       },
       error_file: "/var/log/pm2/emailgenius-broadcasts-error.log",
       out_file: "/var/log/pm2/emailgenius-broadcasts-out.log",

@@ -750,7 +750,9 @@ export default function Home() {
 
                     {/* Content Length */}
                     <div className="space-y-2">
-                      <Label htmlFor="contentLength">Longitud del Contenido</Label>
+                      <Label htmlFor="contentLength">
+                        Longitud del Contenido
+                      </Label>
                       <Select
                         value={watch("contentLength") || "Concise"}
                         onValueChange={(value) =>

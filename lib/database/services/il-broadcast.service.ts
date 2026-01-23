@@ -40,7 +40,8 @@ async function ensureColumns(): Promise<string[]> {
       `SELECT to_regclass('public.${TABLE_NAME}') as exists`
     );
 
-    const exists = tableRes.rows?.[0]?.exists;
+    const exists = (tableRes.rows?.[0] as { exists: unknown } | undefined)
+      ?.exists;
     tableChecked = true;
 
     if (!exists) {

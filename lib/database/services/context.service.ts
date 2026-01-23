@@ -20,8 +20,19 @@ export class ContextService {
       RETURNING *
     `;
     const values = [contextType, data];
-    const res = await query(text, values);
-    return res.rows[0];
+    try {
+      const res = await query(text, values);
+      return res.rows[0];
+    } catch {
+      console.warn("Using mock context cache due to DB outage");
+      return {
+        id: 0,
+        context_type: contextType,
+        context_data: data,
+        created_at: new Date(),
+        expires_at: new Date(Date.now() + ttlSeconds * 1000),
+      } as ContextCache;
+    }
   }
 
   static async getContext(contextType: string): Promise<ContextCache | null> {
@@ -31,7 +42,11 @@ export class ContextService {
       ORDER BY created_at DESC
       LIMIT 1
     `;
-    const res = await query(text, [contextType]);
-    return res.rows[0] || null;
+    try {
+      const res = await query(text, [contextType]);
+      return res.rows[0] || null;
+    } catch {
+      return null;
+    }
   }
 }

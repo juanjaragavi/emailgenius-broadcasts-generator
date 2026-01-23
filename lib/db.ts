@@ -1,23 +1,41 @@
-import { Pool, PoolConfig, PoolClient } from "pg";
+import { PoolClient } from "pg";
 
-console.log("lib/db.ts: DB_HOST is", process.env.DB_HOST);
+// Mock configuration for outage handling
+console.warn("DATABASE DISABLED: Using mock DB implementation due to outage");
 
-const poolConfig: PoolConfig = {
-  host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT || "5432"),
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  max: 20, // Max 10 concurrent connections for Next.js serverless
-  idleTimeoutMillis: 60000, // 30 seconds
-  connectionTimeoutMillis: 30000, // 10 seconds
-  ssl: {
-    rejectUnauthorized: false, // For Cloud SQL public IP, we might need this if not using Cloud SQL Proxy
+// Explicitly type the mock pool to avoid 'any' if possible, or leave as is since we aren't exporting the pool directly
+const pool = {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  on: (_event: string, _callback: (err: Error) => void) => {},
+  connect: async () => {
+    // console.log("Mock pool.connect called");
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+      query: async (_text: string, _params?: any[]) => {
+        // console.log("Mock client.query called", { text });
+        return {
+          rows: [],
+          rowCount: 0,
+          command: "",
+          oid: 0,
+          fields: [],
+        };
+      },
+      release: () => {},
+    } as unknown as CustomPoolClient;
+  },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+  query: async (_text: string, _params?: any[]) => {
+    // console.log("Mock pool.query called", { text });
+    return {
+      rows: [],
+      rowCount: 0,
+      command: "",
+      oid: 0,
+      fields: [],
+    };
   },
 };
-
-// Create a new pool instance
-const pool = new Pool(poolConfig);
 
 // Error handling for the pool
 pool.on("error", (err) => {
@@ -29,12 +47,13 @@ pool.on("error", (err) => {
 export const query = async (text: string, params?: any[]) => {
   const start = Date.now();
   try {
+    // Simulate DB lag slightly? No, immediate return is fine for disabled state.
     const res = await pool.query(text, params);
     const duration = Date.now() - start;
-    console.log("executed query", { text, duration, rows: res.rowCount });
+    console.log("executed MOCK query", { text, duration, rows: res.rowCount });
     return res;
   } catch (error) {
-    console.error("Error executing query", { text, error });
+    console.error("Error executing MOCK query", { text, error });
     throw error;
   }
 };

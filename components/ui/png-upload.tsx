@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,9 +15,9 @@ import {
   Loader2,
   Check,
   AlertCircle,
-  ExternalLink,
-  GitCommit,
   FileImage,
+  Trash2,
+  RefreshCw,
 } from "lucide-react";
 
 interface PngUploadProps {
@@ -27,31 +27,63 @@ interface PngUploadProps {
 
 interface UploadResult {
   ok: boolean;
+  filename: string;
   path: string;
-  branch: string;
-  commitUrl: string;
-  fileUrl?: string;
+  message?: string;
+}
+
+interface VisualExample {
+  filename: string;
+  path: string;
+  size: number;
+  uploadedAt: string;
+  description?: string | null;
 }
 
 export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
   const [filename, setFilename] = useState("");
+  const [description, setDescription] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [existingExamples, setExistingExamples] = useState<VisualExample[]>([]);
+  const [isLoadingExamples, setIsLoadingExamples] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Add .png extension if not present
-  const ensurePngExtension = (name: string) => {
-    const trimmed = name.trim();
-    if (!trimmed) return "";
-    return trimmed.toLowerCase().endsWith(".png") ? trimmed : `${trimmed}.png`;
+  // Load existing examples on mount
+  useEffect(() => {
+    loadExistingExamples();
+  }, []);
+
+  const loadExistingExamples = async () => {
+    setIsLoadingExamples(true);
+    try {
+      const response = await fetch("/api/visual-examples");
+      const data = await response.json();
+      if (data.images) {
+        setExistingExamples(data.images);
+      }
+    } catch (err) {
+      console.error("Error loading examples:", err);
+    } finally {
+      setIsLoadingExamples(false);
+    }
   };
 
-  // Handle filename input without automatic extension display
+  // Add extension if not present
+  const ensureImageExtension = (name: string, file: File | null) => {
+    const trimmed = name.trim();
+    if (!trimmed) return "";
+    const ext = file?.name.split(".").pop()?.toLowerCase() || "png";
+    const validExt = ["png", "webp", "jpg", "jpeg"].includes(ext) ? ext : "png";
+    if (trimmed.toLowerCase().endsWith(`.${validExt}`)) return trimmed;
+    return `${trimmed}.${validExt}`;
+  };
+
   const handleFilenameChange = (value: string) => {
-    // Remove .png extension if user types it, we'll add it automatically on upload
-    const cleanValue = value.replace(/\.png$/i, "");
+    // Remove extension if user types it
+    const cleanValue = value.replace(/\.(png|webp|jpg|jpeg)$/i, "");
     setFilename(cleanValue);
   };
 
@@ -60,16 +92,15 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
     if (!file) return;
 
     // Validate file type
-    if (!file.type.startsWith("image/png")) {
-      setError(
-        "Solo se permiten capturas en formato PNG para el entrenamiento de IA"
-      );
+    const validTypes = ["image/png", "image/webp", "image/jpeg"];
+    if (!validTypes.includes(file.type)) {
+      setError("Solo se permiten imágenes en formato PNG, WebP, o JPG");
       return;
     }
 
     // Validate file size (1MB limit)
     if (file.size > 1024 * 1024) {
-      setError("La captura es muy grande para procesar. Límite: 1MB");
+      setError("La imagen es muy grande. Límite: 1MB");
       return;
     }
 
@@ -78,7 +109,7 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
 
     // Auto-populate filename if empty
     if (!filename) {
-      const name = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+      const name = file.name.replace(/\.[^/.]+$/, "");
       handleFilenameChange(name);
     }
   };
@@ -88,7 +119,6 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
-        // Remove the data URL prefix to get just the base64 string
         const base64 = result.split(",")[1];
         resolve(base64);
       };
@@ -105,17 +135,17 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
     setResult(null);
 
     try {
-      // Convert file to base64
       const base64Content = await convertToBase64(selectedFile);
-      const finalFilename = ensurePngExtension(filename);
+      const finalFilename = ensureImageExtension(filename, selectedFile);
 
       const payload = {
         filename: finalFilename,
         content: base64Content,
-        commitMessage: `feat: agregar ejemplo visual ${finalFilename} para entrenamiento de IA`,
+        description: description.trim() || undefined,
       };
 
-      const response = await fetch("/api/upload-png-image", {
+      // Use local API instead of GitHub
+      const response = await fetch("/api/visual-examples", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -132,8 +162,12 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
       setResult(data);
       onUploadSuccess?.(data);
 
+      // Reload examples list
+      await loadExistingExamples();
+
       // Reset form
       setFilename("");
+      setDescription("");
       setSelectedFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -148,8 +182,26 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
     }
   };
 
+  const handleDeleteExample = async (exampleFilename: string) => {
+    if (!confirm(`¿Eliminar ${exampleFilename}?`)) return;
+
+    try {
+      const response = await fetch(
+        `/api/visual-examples?filename=${encodeURIComponent(exampleFilename)}`,
+        { method: "DELETE" }
+      );
+
+      if (response.ok) {
+        await loadExistingExamples();
+      }
+    } catch (err) {
+      console.error("Error deleting example:", err);
+    }
+  };
+
   const resetUpload = () => {
     setFilename("");
+    setDescription("");
     setSelectedFile(null);
     setResult(null);
     setError(null);
@@ -164,15 +216,55 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
         <CardTitle className="flex items-center gap-2">
           <ImageIcon className="h-5 w-5 text-lime-600" />
           <span className="bg-gradient-to-r from-blue-600 via-cyan-600 to-lime-600 bg-clip-text text-transparent">
-            Agregar Ejemplos Visuales de Emails Exitosos
+            Ejemplos Visuales para Entrenamiento (Estilo Utua)
           </span>
         </CardTitle>
         <CardDescription>
-          Comparte capturas de emails con alto rendimiento para entrenar al
-          agente de IA en diseño y estructura visual efectiva.
+          Sube capturas de emails con diseño visual-first y bajo contenido de
+          texto para entrenar al agente de IA en el lenguaje de diseño Utua.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Existing Examples */}
+        {existingExamples.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Ejemplos Existentes ({existingExamples.length})</Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={loadExistingExamples}
+                disabled={isLoadingExamples}
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${isLoadingExamples ? "animate-spin" : ""}`}
+                />
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-gray-50 rounded-md">
+              {existingExamples.map((example) => (
+                <div
+                  key={example.filename}
+                  className="flex items-center justify-between gap-2 p-2 bg-white rounded border text-xs"
+                >
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <FileImage className="h-4 w-4 text-lime-600 flex-shrink-0" />
+                    <span className="truncate">{example.filename}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => handleDeleteExample(example.filename)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* File Selection */}
         <div className="space-y-2">
           <Label htmlFor="file-input">
@@ -182,7 +274,7 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
             id="file-input"
             ref={fileInputRef}
             type="file"
-            accept=".png,image/png"
+            accept=".png,.webp,.jpg,.jpeg,image/png,image/webp,image/jpeg"
             onChange={handleFileSelect}
             disabled={isUploading}
             className="border-lime-200 focus:border-lime-400 focus:ring-lime-400"
@@ -196,30 +288,34 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
             </div>
           )}
           <p className="text-xs text-gray-500">
-            📸 Solo archivos PNG. Ideal para capturas de pantalla de emails de
-            ActiveCampaign
+            📸 Formatos: PNG, WebP, JPG. Máximo 1MB.
           </p>
         </div>
 
         {/* Filename Input */}
         <div className="space-y-2">
           <Label htmlFor="filename">Nombre Descriptivo del Ejemplo *</Label>
-          <div className="relative">
-            <Input
-              id="filename"
-              value={filename}
-              onChange={(e) => handleFilenameChange(e.target.value)}
-              placeholder="ej: email-promocional-alto-ctr-agosto-2025"
-              disabled={isUploading}
-              className="border-lime-200 focus:border-lime-400 focus:ring-lime-400 pr-14"
-            />
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
-              .png
-            </div>
-          </div>
-          <p className="text-xs text-gray-500">
-            🖼️ La extensión .png se añadirá automáticamente al archivo
-          </p>
+          <Input
+            id="filename"
+            value={filename}
+            onChange={(e) => handleFilenameChange(e.target.value)}
+            placeholder="ej: utua-loan-notification-dark-theme"
+            disabled={isUploading}
+            className="border-lime-200 focus:border-lime-400 focus:ring-lime-400"
+          />
+        </div>
+
+        {/* Optional Description */}
+        <div className="space-y-2">
+          <Label htmlFor="description">Descripción (opcional)</Label>
+          <Input
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="ej: Email con alta tasa de apertura, tema oscuro, CTA verde"
+            disabled={isUploading}
+            className="border-lime-200 focus:border-lime-400 focus:ring-lime-400"
+          />
         </div>
 
         {/* Error Display */}
@@ -235,57 +331,32 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
           <div className="space-y-3 p-4 bg-gradient-to-r from-lime-50 to-cyan-50 border border-lime-200 rounded-md">
             <div className="flex items-center gap-2 text-lime-700 font-medium">
               <Check className="h-4 w-4" />
-              ¡Ejemplo Visual Agregado al Entrenamiento!
+              ¡Ejemplo Visual Guardado Localmente!
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <FileImage className="h-4 w-4 text-gray-600" />
                 <span>
-                  Ejemplo visual:{" "}
+                  Guardado en:{" "}
                   <code className="bg-white px-1 rounded border border-lime-100">
-                    {result.path}
+                    public{result.path}
                   </code>
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <GitCommit className="h-4 w-4 text-gray-600" />
-                <a
-                  href={result.commitUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-cyan-600 hover:underline flex items-center gap-1 transition-colors"
-                >
-                  Ver Registro de Entrenamiento{" "}
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
-              {result.fileUrl && (
-                <div className="flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4 text-gray-600" />
-                  <a
-                    href={result.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-cyan-600 hover:underline flex items-center gap-1 transition-colors"
-                  >
-                    Ver Ejemplo Visual <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
-              )}
             </div>
             <p className="text-xs text-emerald-700 bg-emerald-50 p-2 rounded border border-emerald-200">
-              🤖 El agente de IA ahora puede analizar este diseño para futuras
-              recomendaciones
+              🤖 El agente de IA usará este ejemplo como referencia de diseño
+              Utua
             </p>
           </div>
         )}
 
         <CardDescription>
-          💡 <strong>Mejores ejemplos:</strong> Emails con alta tasa de
-          apertura, clics elevados, o diseños que generaron buenas conversiones.
-          Nombra descriptivamente como{" "}
+          💡 <strong>Estilo Utua requerido:</strong> Emails con poco texto
+          (&lt;80 palabras), CTAs prominentes, y jerarquía visual clara. Nombra
+          como{" "}
           <code className="bg-gradient-to-r from-lime-100 to-cyan-50 px-1 rounded">
-            notificacion-seguridad-exitosa-2025
+            utua-card-notification-2025
           </code>
         </CardDescription>
 
@@ -299,12 +370,12 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
             {isUploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Entrenando IA...
+                Guardando...
               </>
             ) : (
               <>
                 <Upload className="mr-2 h-4 w-4" />
-                Agregar al Entrenamiento Visual
+                Guardar Ejemplo Visual
               </>
             )}
           </Button>
@@ -316,7 +387,7 @@ export function PngUpload({ onUploadSuccess, onUploadError }: PngUploadProps) {
               disabled={isUploading}
               className="border-lime-200 text-gray-700 hover:bg-gradient-to-r hover:from-lime-50 hover:to-cyan-50"
             >
-              Reiniciar
+              Limpiar
             </Button>
           )}
         </div>
