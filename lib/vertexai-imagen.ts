@@ -4,6 +4,8 @@ import {
   SafetyFilterLevel,
   ImagePromptLanguage,
 } from "@google/genai";
+import { optimizeEmailImage, formatFileSize } from "@/lib/image-optimizer";
+import { IMAGE_SIZE_LIMITS } from "@/types/image-optimizer";
 
 export class VertexAIImageService {
   private readonly projectId: string;
@@ -64,6 +66,7 @@ export class VertexAIImageService {
 
   async generateImage(prompt: string): Promise<string> {
     try {
+      console.log("🎨 Vertex AI: Generating image...");
       const response = await this.vertex.models.generateImages({
         model: this.modelId,
         prompt: prompt,
@@ -88,9 +91,56 @@ export class VertexAIImageService {
         throw new Error("No image data returned from Vertex AI");
       }
 
-      // Return base64 encoded image as data URL
+      // Create initial data URL from generated image
       const mimeType = generatedImage.image.mimeType || "image/png";
-      return `data:${mimeType};base64,${generatedImage.image.imageBytes}`;
+      const rawDataUrl = `data:${mimeType};base64,${generatedImage.image.imageBytes}`;
+
+      // Calculate original size
+      const originalSizeBytes = Buffer.from(
+        generatedImage.image.imageBytes,
+        "base64"
+      ).length;
+      console.log(
+        `📦 Vertex AI: Raw image size: ${formatFileSize(originalSizeBytes)}`
+      );
+
+      // Post-process: Optimize image for email delivery (target: <100KB)
+      if (originalSizeBytes > IMAGE_SIZE_LIMITS.TARGET_SIZE_BYTES) {
+        console.log(
+          `🔧 Image Optimizer: Compressing image (target: <${formatFileSize(IMAGE_SIZE_LIMITS.MAX_SIZE_BYTES)})...`
+        );
+
+        const optimizationResult = await optimizeEmailImage(rawDataUrl, {
+          targetWidth: 700,
+          maxSizeBytes: IMAGE_SIZE_LIMITS.MAX_SIZE_BYTES,
+          outputFormat: "jpeg",
+          quality: 85,
+          minQuality: 40,
+        });
+
+        if (optimizationResult.success) {
+          console.log(
+            `✅ Image Optimizer: Compressed ${formatFileSize(optimizationResult.originalSizeBytes)} → ${formatFileSize(optimizationResult.finalSizeBytes)} (${optimizationResult.percentReduction}% reduction, quality: ${optimizationResult.qualityUsed})`
+          );
+
+          if (optimizationResult.warning) {
+            console.warn(`⚠️ Image Optimizer: ${optimizationResult.warning}`);
+          }
+
+          return optimizationResult.dataUrl;
+        } else {
+          console.error(
+            `❌ Image Optimizer: Optimization failed - ${optimizationResult.error}`
+          );
+          // Fall back to original image if optimization fails
+          console.log("📤 Returning original unoptimized image");
+          return rawDataUrl;
+        }
+      }
+
+      // Image is already small enough, return as-is
+      console.log("✅ Vertex AI: Image already within size limits");
+      return rawDataUrl;
     } catch (error) {
       console.error("Error generating image with Vertex AI:", error);
 

@@ -25,6 +25,7 @@
     "@react-email/render": "^2.0.0",
     "@types/marked": "^5.0.2",
     "@types/pg": "^8.15.6",
+    "@types/sharp": "^0.31.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "dotenv": "^17.2.3",
@@ -35,6 +36,7 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.50.1",
+    "sharp": "^0.34.5",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7"
   },
