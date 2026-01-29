@@ -111,9 +111,9 @@ export class VertexAIImageService {
         );
 
         const optimizationResult = await optimizeEmailImage(rawDataUrl, {
-          targetWidth: 700,
+          targetWidth: 600, // Standard email width for optimal mobile/desktop rendering
           maxSizeBytes: IMAGE_SIZE_LIMITS.MAX_SIZE_BYTES,
-          outputFormat: "jpeg",
+          outputFormat: "jpeg", // JPEG for photographic content (better compression than PNG)
           quality: 85,
           minQuality: 40,
         });

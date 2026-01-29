@@ -43,7 +43,7 @@ export type ImageOutputFormat = "jpeg" | "webp" | "png";
  * Image optimization configuration
  */
 export interface ImageOptimizationConfig {
-  /** Target width in pixels (default: 700) */
+  /** Target width in pixels (default: 600) */
   targetWidth?: number;
   /** Maximum file size in bytes (default: 100KB) */
   maxSizeBytes?: number;
@@ -122,7 +122,7 @@ export interface ImageAnalysis {
  * Default optimization configuration
  */
 export const DEFAULT_OPTIMIZATION_CONFIG: Required<ImageOptimizationConfig> = {
-  targetWidth: EMAIL_IMAGE_DIMENSIONS.WIDE_WIDTH,
+  targetWidth: EMAIL_IMAGE_DIMENSIONS.STANDARD_WIDTH,
   maxSizeBytes: IMAGE_SIZE_LIMITS.MAX_SIZE_BYTES,
   outputFormat: "jpeg",
   quality: 85,
