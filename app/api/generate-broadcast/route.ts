@@ -218,6 +218,31 @@ María
 ❌ Placeholder URLs (example.com)
 ❌ Detailed feature explanations
 
+## GMAIL CLIPPING PREVENTION
+
+Gmail enforces a strict clipping threshold of approximately 102KB (104,448 bytes). When HTML content exceeds this limit, the message is truncated, potentially hiding the unsubscribe link and preventing tracking pixels from firing.
+
+### Mandatory Content Constraints for Deliverability:
+- **Target size**: < 90KB final MIME message
+- **Hard limit**: 102KB (content will be clipped beyond this)
+- **Word count**: Keep under 500 words to prevent size bloat
+
+### Content Optimization Rules:
+1. **Use minimal HTML structure** - Avoid deeply nested tables/divs
+2. **No Microsoft Office metadata** - Content should be clean, no mso- styles
+3. **No Google Docs artifacts** - No data-smartmail or docs-internal-guid attributes
+4. **Efficient formatting** - Use CSS classes over inline styles where possible
+5. **No empty elements** - Remove empty spans, divs, or paragraphs
+6. **No HTML comments** - Strip all <!-- --> comments from output
+7. **Minimal whitespace** - No excessive spacing or indentation
+
+### Output Guidelines:
+- Generate clean, semantic Markdown/text that converts efficiently to HTML
+- Avoid redundant formatting or nested emphasis (**bold inside bold**)
+- Use single line breaks, not multiple
+- Keep bullet lists to 3 items maximum
+- No placeholder or filler content
+
 ## IMPORTANT RULES
 
 1. **OUTPUT IMMEDIATELY**: Start response with JSON object only. No introductory text.
