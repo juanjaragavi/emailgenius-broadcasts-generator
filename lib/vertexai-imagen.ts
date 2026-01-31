@@ -104,43 +104,38 @@ export class VertexAIImageService {
         `📦 Vertex AI: Raw image size: ${formatFileSize(originalSizeBytes)}`
       );
 
-      // Post-process: Optimize image for email delivery (target: <100KB)
-      if (originalSizeBytes > IMAGE_SIZE_LIMITS.TARGET_SIZE_BYTES) {
+      // Post-process: Always optimize and convert to JPEG for ActiveCampaign compatibility
+      // ActiveCampaign requires JPG format, not PNG
+      console.log(
+        `🔧 Image Optimizer: Converting to JPEG and compressing (target: <${formatFileSize(IMAGE_SIZE_LIMITS.MAX_SIZE_BYTES)})...`
+      );
+
+      const optimizationResult = await optimizeEmailImage(rawDataUrl, {
+        targetWidth: 600, // Standard email width for optimal mobile/desktop rendering
+        maxSizeBytes: IMAGE_SIZE_LIMITS.MAX_SIZE_BYTES,
+        outputFormat: "jpeg", // JPEG required for ActiveCampaign compatibility
+        quality: 85,
+        minQuality: 40,
+      });
+
+      if (optimizationResult.success) {
         console.log(
-          `🔧 Image Optimizer: Compressing image (target: <${formatFileSize(IMAGE_SIZE_LIMITS.MAX_SIZE_BYTES)})...`
+          `✅ Image Optimizer: Converted to JPEG - ${formatFileSize(optimizationResult.originalSizeBytes)} → ${formatFileSize(optimizationResult.finalSizeBytes)} (${optimizationResult.percentReduction}% reduction, quality: ${optimizationResult.qualityUsed})`
         );
 
-        const optimizationResult = await optimizeEmailImage(rawDataUrl, {
-          targetWidth: 600, // Standard email width for optimal mobile/desktop rendering
-          maxSizeBytes: IMAGE_SIZE_LIMITS.MAX_SIZE_BYTES,
-          outputFormat: "jpeg", // JPEG for photographic content (better compression than PNG)
-          quality: 85,
-          minQuality: 40,
-        });
-
-        if (optimizationResult.success) {
-          console.log(
-            `✅ Image Optimizer: Compressed ${formatFileSize(optimizationResult.originalSizeBytes)} → ${formatFileSize(optimizationResult.finalSizeBytes)} (${optimizationResult.percentReduction}% reduction, quality: ${optimizationResult.qualityUsed})`
-          );
-
-          if (optimizationResult.warning) {
-            console.warn(`⚠️ Image Optimizer: ${optimizationResult.warning}`);
-          }
-
-          return optimizationResult.dataUrl;
-        } else {
-          console.error(
-            `❌ Image Optimizer: Optimization failed - ${optimizationResult.error}`
-          );
-          // Fall back to original image if optimization fails
-          console.log("📤 Returning original unoptimized image");
-          return rawDataUrl;
+        if (optimizationResult.warning) {
+          console.warn(`⚠️ Image Optimizer: ${optimizationResult.warning}`);
         }
-      }
 
-      // Image is already small enough, return as-is
-      console.log("✅ Vertex AI: Image already within size limits");
-      return rawDataUrl;
+        return optimizationResult.dataUrl;
+      } else {
+        console.error(
+          `❌ Image Optimizer: Optimization failed - ${optimizationResult.error}`
+        );
+        // Fall back to original image if optimization fails
+        console.log("📤 Returning original unoptimized image");
+        return rawDataUrl;
+      }
     } catch (error) {
       console.error("Error generating image with Vertex AI:", error);
 

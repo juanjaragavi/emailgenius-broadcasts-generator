@@ -92,18 +92,24 @@ export async function POST(request: NextRequest) {
     if (!filename || !content) {
       return NextResponse.json(
         {
-          error:
-            "Se requiere nombre de archivo y contenido para la captura de pantalla",
+          error: "Se requiere nombre de archivo y contenido para la imagen",
         },
         { status: 400 }
       );
     }
 
-    // Validate PNG file extension
+    // Validate image file extension (PNG or JPG/JPEG)
     const lower = filename.toLowerCase();
-    if (!lower.endsWith(".png")) {
+    const isValidImage =
+      lower.endsWith(".png") ||
+      lower.endsWith(".jpg") ||
+      lower.endsWith(".jpeg");
+    if (!isValidImage) {
       return NextResponse.json(
-        { error: "Solo se permiten capturas de pantalla en formato PNG" },
+        {
+          error:
+            "Solo se permiten capturas de pantalla en formato PNG, JPG o JPEG",
+        },
         { status: 400 }
       );
     }
@@ -112,7 +118,7 @@ export async function POST(request: NextRequest) {
     const approxSizeBytes = Buffer.byteLength(content, "base64");
     if (approxSizeBytes > 1024 * 1024) {
       return NextResponse.json(
-        { error: "La captura de pantalla es muy grande. Límite máximo: 1MB" },
+        { error: "La imagen es muy grande. Límite máximo: 1MB" },
         { status: 413 }
       );
     }
@@ -148,7 +154,7 @@ export async function POST(request: NextRequest) {
       message:
         commitMessage ||
         `feat: agregar captura exitosa ${filename} - alto rendimiento en clicks y aperturas`,
-      content: content, // Base64 encoded PNG content
+      content: content, // Base64 encoded image content (PNG/JPG/JPEG)
       branch: "main",
       ...(existingSha && { sha: existingSha }),
     });

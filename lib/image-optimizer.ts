@@ -74,12 +74,9 @@ export async function analyzeImage(
     sizeBytes > IMAGE_SIZE_LIMITS.TARGET_SIZE_BYTES ||
     width > EMAIL_IMAGE_DIMENSIONS.MAX_WIDTH;
 
-  // Recommend format based on content type
-  // JPEG is best for photographic content (which Imagen generates)
-  const recommendedFormat: ImageOutputFormat =
-    format === "png" && sizeBytes > IMAGE_SIZE_LIMITS.TARGET_SIZE_BYTES
-      ? "jpeg"
-      : "jpeg";
+  // Always recommend JPEG format for email images
+  // JPEG provides optimal compression for photographic content and ActiveCampaign compatibility
+  const recommendedFormat: ImageOutputFormat = "jpeg";
 
   // Recommend width
   const recommendedWidth = Math.min(width, EMAIL_IMAGE_DIMENSIONS.WIDE_WIDTH);

@@ -89,11 +89,46 @@ The Utua design language emphasizes:
 
 ### ActiveCampaign:
 - Use \`%FIRSTNAME%\` for personalization
-- Natural text formatting (will convert to HTML)
+- **HTML email body with inline styles** (not plain text!)
 - Single subject line (with or without emoji based on email type)
 - Preheader text under 140 characters
 - From Name: Personal first name only (e.g., "Emily", "Peter")
 - From Email: topfinance@topfinanzas.com (US/UK) or info@topfinanzas.com (Mexico)
+
+## ActiveCampaign HTML Structure Requirements
+
+**CRITICAL**: ActiveCampaign emails MUST use HTML with inline styles. Do NOT generate plain text.
+
+### HTML Email Body Template:
+\`\`\`html
+<div style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333;">
+  <p style="margin: 0 0 16px 0;">Hey %FIRSTNAME%,</p>
+  
+  <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: bold;">YOUR MESSAGE HERE 🎉</p>
+  
+  <ul style="margin: 0 0 20px 0; padding-left: 20px;">
+    <li style="margin-bottom: 8px;">✅ Benefit one</li>
+    <li style="margin-bottom: 8px;">✨ Benefit two</li>
+    <li style="margin-bottom: 8px;">✔ Benefit three</li>
+  </ul>
+  
+  <p style="margin: 0 0 20px 0;">CTA context text here:</p>
+  
+  <p style="margin: 0 0 16px 0;">Best,<br>Emily</p>
+</div>
+\`\`\`
+
+### HTML Inline Style Rules:
+- **All styles must be inline** - No external CSS or <style> tags
+- **Use <p> tags** with margin: 0 0 16px 0 for paragraphs
+- **Use <br> tags** for line breaks within paragraphs
+- **Use <ul> and <li>** for bullet lists with inline styles
+- **Use <strong> or <b>** for bold text, never **markdown**
+- **Keep it simple** - Avoid nested tables or complex structures
+- **Font family**: Arial, sans-serif
+- **Font size**: 16px (body), 18px (headlines)
+- **Line height**: 1.6
+- **Text color**: #333333 (dark gray)
 
 ## Image Generation Prompt
 
@@ -144,7 +179,7 @@ Examples:
   "previewText": "Preheader under 140 chars",
   "fromName": "FirstName (e.g., Emily)",
   "fromEmail": "topfinance@topfinanzas.com or info@topfinanzas.com",
-  "emailBody": "Utua-style minimal body with %FIRSTNAME%",
+  "emailBody": "<div style=\"font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333;\"><p style=\"margin: 0 0 16px 0;\">Hey %FIRSTNAME%,</p><p style=\"margin: 0 0 16px 0; font-size: 18px; font-weight: bold;\">MESSAGE 🎉</p><ul style=\"margin: 0 0 20px 0; padding-left: 20px;\"><li style=\"margin-bottom: 8px;\">✅ Benefit</li></ul><p style=\"margin: 0 0 20px 0;\">CTA context</p><p style=\"margin: 0 0 16px 0;\">Best,<br>Emily</p></div>",
   "ctaButtonText": "ACTION (2-3 words)",
   "destinationUrl": "Full URL with UTM params",
   "imagePrompt": "Generate an... 16:9 aspect ratio."
@@ -152,9 +187,9 @@ Examples:
 
 ## Example Outputs (FOLLOW THESE PATTERNS)
 
-### Example 1 - Loan Status Update:
+### Example 1 - ConvertKit (Markdown):
 \`\`\`
-Hey %FIRSTNAME%,
+Hey {{ subscriber.first_name }},
 
 Great news! 🎉 Your loan indication has moved forward.
 
@@ -170,39 +205,62 @@ Best,
 Emily
 \`\`\`
 
-### Example 2 - Card Notification:
+### Example 2 - ActiveCampaign (HTML):
+\`\`\`html
+<div style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333;">
+  <p style="margin: 0 0 16px 0;">Hey %FIRSTNAME%,</p>
+  
+  <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: bold;">Great news! 🎉 Your loan indication has moved forward.</p>
+  
+  <p style="margin: 0 0 16px 0;">You now have access to:</p>
+  
+  <ul style="margin: 0 0 20px 0; padding-left: 20px; list-style-type: none;">
+    <li style="margin-bottom: 8px;">✅ A flexible limit</li>
+    <li style="margin-bottom: 8px;">✨ Exclusive benefits just for you</li>
+  </ul>
+  
+  <p style="margin: 0 0 20px 0;">Review the details by clicking below:</p>
+  
+  <p style="margin: 0 0 16px 0;">Best,<br>Emily</p>
+</div>
 \`\`\`
-Hey %FIRSTNAME%,
 
-YOUR CARD IS READY! 🎉
-*Requires approval
-
-✔ No credit impact when applying
-✔ No annual or monthly fees
-✔ Flexible payment options
-
-[SEE CARD]
-
-Best,
-Peter
+### Example 3 - ActiveCampaign Card Ready (HTML):
+\`\`\`html
+<div style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333;">
+  <p style="margin: 0 0 16px 0;">Hey %FIRSTNAME%,</p>
+  
+  <p style="margin: 0 0 12px 0; font-size: 20px; font-weight: bold;">YOUR CARD IS READY! 🎉</p>
+  <p style="margin: 0 0 16px 0; font-size: 14px; font-style: italic; color: #666666;">*Requires approval</p>
+  
+  <ul style="margin: 0 0 20px 0; padding-left: 20px; list-style-type: none;">
+    <li style="margin-bottom: 8px;">✔ No credit impact when applying</li>
+    <li style="margin-bottom: 8px;">✔ No annual or monthly fees</li>
+    <li style="margin-bottom: 8px;">✔ Flexible payment options</li>
+  </ul>
+  
+  <p style="margin: 0 0 16px 0;">Best,<br>Peter</p>
+</div>
 \`\`\`
 
-### Example 3 - Account Review (Spanish/Mexico):
-\`\`\`
-Hola %FIRSTNAME%,
-
-¡Buenas noticias! 🎉 Tu solicitud ha avanzado.
-
-Ahora tienes acceso a:
-✅ Un límite flexible
-✨ Beneficios exclusivos para ti
-
-Revisa los detalles aquí:
-
-[VER PRÉSTAMO]
-
-Saludos,
-María
+### Example 4 - ActiveCampaign Spanish/Mexico (HTML):
+\`\`\`html
+<div style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333;">
+  <p style="margin: 0 0 16px 0;">Hola %FIRSTNAME%,</p>
+  
+  <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: bold;">¡Buenas noticias! 🎉 Tu solicitud ha avanzado.</p>
+  
+  <p style="margin: 0 0 16px 0;">Ahora tienes acceso a:</p>
+  
+  <ul style="margin: 0 0 20px 0; padding-left: 20px; list-style-type: none;">
+    <li style="margin-bottom: 8px;">✅ Un límite flexible</li>
+    <li style="margin-bottom: 8px;">✨ Beneficios exclusivos para ti</li>
+  </ul>
+  
+  <p style="margin: 0 0 20px 0;">Revisa los detalles aquí:</p>
+  
+  <p style="margin: 0 0 16px 0;">Saludos,<br>María</p>
+</div>
 \`\`\`
 
 ## ABSOLUTE PROHIBITIONS
@@ -214,6 +272,7 @@ María
 ❌ Department signatures (e.g., "The Card Issuance Team")
 ❌ Long paragraphs (more than 2 sentences each)
 ❌ Excessive bold text (max 2 bold phrases)
+❌ **Plain text for ActiveCampaign** (must use HTML!)
 ❌ Corporate/formal language
 ❌ Placeholder URLs (example.com)
 ❌ Detailed feature explanations
@@ -231,15 +290,16 @@ Gmail enforces a strict clipping threshold of approximately 102KB (104,448 bytes
 1. **Use minimal HTML structure** - Avoid deeply nested tables/divs
 2. **No Microsoft Office metadata** - Content should be clean, no mso- styles
 3. **No Google Docs artifacts** - No data-smartmail or docs-internal-guid attributes
-4. **Efficient formatting** - Use CSS classes over inline styles where possible
+4. **Efficient formatting** - Use inline styles for ActiveCampaign, Markdown for ConvertKit
 5. **No empty elements** - Remove empty spans, divs, or paragraphs
 6. **No HTML comments** - Strip all <!-- --> comments from output
-7. **Minimal whitespace** - No excessive spacing or indentation
+7. **Minimal whitespace** - No excessive spacing or indentation in HTML
 
 ### Output Guidelines:
-- Generate clean, semantic Markdown/text that converts efficiently to HTML
-- Avoid redundant formatting or nested emphasis (**bold inside bold**)
-- Use single line breaks, not multiple
+- **ActiveCampaign**: Generate clean HTML with inline styles (see examples above)
+- **ConvertKit**: Generate clean Markdown/text with proper formatting
+- Avoid redundant formatting or nested emphasis
+- Use single line breaks in HTML, not multiple
 - Keep bullet lists to 3 items maximum
 - No placeholder or filler content
 
