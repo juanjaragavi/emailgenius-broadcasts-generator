@@ -5,6 +5,7 @@ import { SessionService } from "@/lib/database/services/session.service";
 import { BroadcastService } from "@/lib/database/services/broadcast.service";
 import { ApiRequestService } from "@/lib/database/services/api-request.service";
 import { ILBroadcastService } from "@/lib/database/services/il-broadcast.service";
+import { GenerationMemoryService } from "@/lib/generation-memory";
 
 // Initialize Vertex AI with service account credentials or ADC
 // This will try service account credentials first, then fall back to ADC
@@ -385,6 +386,35 @@ export async function POST(request: NextRequest) {
       contextMetadata.success = false;
     }
 
+    // GENERATION MEMORY: Fetch recent generations for diversity context
+    let generationMemoryContext = "";
+    try {
+      console.log(
+        "🧠 Generation Memory: Loading historical context for diversity..."
+      );
+      generationMemoryContext = GenerationMemoryService.formatAsLLMContext({
+        limit: 10,
+        market: formData.market,
+        platform: formData.platform,
+      });
+
+      if (generationMemoryContext) {
+        const stats = GenerationMemoryService.getStats();
+        console.log(
+          `✅ Generation Memory: Loaded ${stats.totalGenerations} records for diversity context`
+        );
+      } else {
+        console.log(
+          "ℹ️ Generation Memory: No previous generations found (first run)"
+        );
+      }
+    } catch (error) {
+      console.warn(
+        "⚠️ Generation Memory: Failed to load history, continuing without:",
+        error
+      );
+    }
+
     // Note: Supermemory integration removed - using local visual context and database only
 
     // Fetch recent broadcasts from Database for negative constraints
@@ -531,14 +561,14 @@ Generate an email broadcast based on these specifications.`;
       ? `\n\n=== UTUA VISUAL DESIGN CONTEXT ACTIVE ===\nLocal visual context loaded with ${contextMetadata.localExamples} examples at ${new Date().toISOString()}:\n\n`
       : `\n\n=== UTUA DESIGN CONTEXT (SYSTEM PROMPT ONLY) ===\nLocal visual examples not found. Using Utua design principles from system prompt.\n\n`;
 
-    const enhancedSystemPrompt = `${systemPrompt}${contextHeader}${dynamicContext}${recentBroadcastsContext}${ilBroadcastsContext}`;
+    const enhancedSystemPrompt = `${systemPrompt}${contextHeader}${dynamicContext}${generationMemoryContext}${recentBroadcastsContext}${ilBroadcastsContext}`;
 
     console.log(
       `🤖 LLM: Generating email content with ${
         contextMetadata.success
           ? `Utua visual context (${contextMetadata.localExamples} examples)`
           : "system prompt only"
-      }${
+      }${generationMemoryContext ? " and Generation Memory" : ""}${
         recentBroadcastsContext ? " and Database history" : ""
       }${ilBroadcastsContext ? " and IL dataset" : ""}`
     );
@@ -625,6 +655,35 @@ Generate an email broadcast based on these specifications.`;
       console.log(`✅ Database: Broadcast stored with ID ${broadcastId}`);
     } catch (dbError) {
       console.error("⚠️ Database: Failed to store broadcast:", dbError);
+    }
+
+    // GENERATION MEMORY: Store this generation for future diversity context
+    try {
+      const storedRecord = GenerationMemoryService.storeGeneration({
+        market: formData.market,
+        platform: formData.platform,
+        emailType: formData.emailType,
+        subjectLine: emailBroadcast.subjectLine1,
+        subjectLine2: emailBroadcast.subjectLine2,
+        previewText: emailBroadcast.previewText || emailBroadcast.preheaderText,
+        ctaButtonText: emailBroadcast.ctaButtonText,
+        bodySnippet: emailBroadcast.emailBody
+          ? emailBroadcast.emailBody.substring(0, 500)
+          : undefined,
+        imagePrompt: emailBroadcast.imagePrompt,
+      });
+
+      if (storedRecord) {
+        const stats = GenerationMemoryService.getStats();
+        console.log(
+          `✅ Generation Memory: Stored generation (${stats.totalGenerations} total records)`
+        );
+      }
+    } catch (memoryError) {
+      console.warn(
+        "⚠️ Generation Memory: Failed to store generation:",
+        memoryError
+      );
     }
 
     // Log API Request
