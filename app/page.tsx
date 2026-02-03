@@ -31,7 +31,7 @@ import {
   History,
   Clock,
   ShieldCheck,
-  Eye,
+  Edit3,
 } from "lucide-react";
 import { marked } from "marked";
 import Image from "next/image";
@@ -41,6 +41,7 @@ import { Header } from "@/components/ui/header";
 import { SpamScoreDisplay } from "@/components/spam-score-display";
 import { EmailPreviewPanel } from "@/components/email-preview-panel";
 import { SpamCheckApiResponse } from "@/types/spam-check";
+import { formatEmailBodyForActiveCampaign } from "@/lib/html-to-plain-text";
 
 interface FormData {
   platform: "ActiveCampaign" | "ConvertKit" | "";
@@ -263,11 +264,13 @@ export default function Home() {
     content,
     fieldName,
     className = "text-sm",
+    copyTooltip,
   }: {
     label: string;
     content: string;
     fieldName: string;
     className?: string;
+    copyTooltip?: string;
   }) => (
     <div>
       <div className="flex items-center justify-between mb-1">
@@ -277,6 +280,7 @@ export default function Home() {
           variant="outline"
           size="sm"
           className="h-8 px-2 text-xs border-lime-200 text-lime-700 hover:bg-lime-50 hover:border-lime-300 transition-colors"
+          title={copyTooltip || "Copiar al portapapeles"}
         >
           {copiedField === fieldName ? (
             <>
@@ -954,8 +958,11 @@ export default function Home() {
 
                       <FieldWithCopy
                         label="Cuerpo del Email:"
-                        content={result.emailBody}
+                        content={formatEmailBodyForActiveCampaign(
+                          result.emailBody
+                        )}
                         fieldName="emailBody"
+                        copyTooltip="Copiar texto plano para ActiveCampaign Rich Text Editor"
                       />
 
                       <FieldWithCopy
@@ -1232,13 +1239,14 @@ export default function Home() {
                           onClick={() => setShowPreviewPanel(true)}
                           variant="outline"
                           className="w-full bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 text-blue-700 border-blue-200"
+                          aria-label="Editar y previsualizar el email generado"
                         >
-                          <Eye className="h-4 w-4 mr-2" />
-                          Abrir Vista Previa del Email
+                          <Edit3 className="h-4 w-4 mr-2" />
+                          Editar y Previsualizar Email
                         </Button>
                         <p className="text-xs text-gray-500 text-center">
-                          Visualiza el email renderizado con plantillas React
-                          Email optimizadas para clientes de correo
+                          Edita el contenido y visualiza el email renderizado
+                          con plantillas React Email optimizadas
                         </p>
                       </div>
 
