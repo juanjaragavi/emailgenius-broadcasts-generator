@@ -36,7 +36,7 @@ tools:
 
 ## Project Overview
 
-EmailGenius Broadcasts Generator is an AI-powered email broadcast creation tool that uses Google Cloud Vertex AI (Gemini 2.5 Flash) to generate high-engagement email campaigns optimized for both ConvertKit and ActiveCampaign platforms. The application specializes in creating financial product marketing emails that mimic transactional communications to maximize open rates and conversions.
+**EmailGenius Broadcasts Generator** (`/Users/macbookpro/GitHub/emailgenius-broadcasts-generator`), is an AI-powered email broadcast creation tool that uses Google Cloud Vertex AI (Gemini 2.5 Flash) to generate high-engagement email campaigns optimized for both ConvertKit and ActiveCampaign platforms. The application specializes in creating financial product marketing emails that mimic transactional communications to maximize open rates and conversions.
 
 ## Production Environment Setup
 
@@ -102,9 +102,10 @@ The application now uses **service account credentials via environment variables
 
 ### AI Integration
 
-- **Primary AI Service**: Google Cloud Vertex AI using Gemini 1.5 Pro model
+- **Primary AI Service**: Google Cloud Vertex AI using Gemini 2.5 Flash model ("gemini-2.5-flash")
 - **Authentication**: Service Account Credentials via environment variables with ADC fallback
-- **Request Processing**: JSON-based system prompts with comprehensive email generation rules
+- **Request Processing**: JSON-based system prompts optimized for Utua visual-first email design
+- **SDK**: `@google/genai` v1.30.0 (GoogleGenAI class)
 
 ### Frontend Architecture
 
@@ -287,12 +288,31 @@ sudo -u www-data git log --oneline -10
 
 ```markdown
 app/
-├── api/generate-broadcast/route.ts # Main AI API endpoint with service account authentication
+├── api/
+│ ├── generate-broadcast/route.ts # Main AI API endpoint with service account authentication
+│ ├── generate-image/route.ts # Vertex AI Imagen integration for header images
+│ ├── spam-check/route.ts # Postmark SpamAssassin integration
+│ ├── gmail-clip-check/route.ts # Gmail clipping prevention validation
+│ ├── render-email/route.ts # Email HTML rendering
+│ ├── broadcasts/route.ts # Broadcast CRUD operations
+│ ├── sessions/route.ts # Session management
+│ ├── visual-examples/route.ts # Visual examples management
+│ ├── upload-png-image/route.ts # PNG image upload to GitHub
+│ ├── upload-winner-subject/route.ts # Winner subject line upload
+│ └── mcp-status/route.ts # MCP server health check
 ├── page.tsx # Main application with form handling and rich text copying
 ├── layout.tsx # App layout with Poppins font and gradient background
-└── globals.css # Global styles and Tailwind configuration
+└── globals.css # Global styles, Tailwind configuration, Utua design variables
 
-components/ui/ # Shadcn/ui components
+components/
+├── email-preview-panel.tsx # Email preview with spam check integration
+├── spam-score-display.tsx # Spam score visualization
+├── email-content-metrics.tsx # Content metrics (word count, character count)
+├── top-ads-navigation.tsx # Navigation component
+└── ui/ # Shadcn/ui components
+├── header.tsx # Application header
+├── file-upload.tsx # Generic file upload
+├── png-upload.tsx # PNG upload to GitHub
 ├── button.tsx # Reusable button component with variants
 ├── card.tsx # Card layout components
 ├── input.tsx # Form input components
@@ -301,10 +321,28 @@ components/ui/ # Shadcn/ui components
 └── textarea.tsx # Textarea form components
 
 lib/
+├── local-visual-context.ts # Utua design principles and local examples provider
+├── generation-memory.ts # Tracks recent generations for diversity
+├── email-renderer.ts # Email HTML rendering utilities
+├── spam-check.ts # Spam analysis client (Postmark)
+├── html-to-plain-text.ts # HTML to plain text conversion
+├── email-size-analyzer.ts # Email size analysis for Gmail clipping
+├── image-optimizer.ts # Image optimization utilities
+├── vertexai-imagen.ts # Vertex AI Imagen image generation
+├── db.ts # PostgreSQL connection pool
 ├── utils.ts # Tailwind class merging utility
+├── database/services/ # Database service layer
+│ ├── session.service.ts # Session management
+│ ├── broadcast.service.ts # Broadcast persistence
+│ ├── il-broadcast.service.ts # IL dataset management
+│ ├── api-request.service.ts # API request logging
+│ ├── context.service.ts # Context management
+│ └── template.service.ts # Template management
 ├── documents/ # Comprehensive project documentation
 │ ├── emailgenius-broadcasts-generator-system-prompt.md
 │ ├── RICH_TEXT_COPY_FIX.md # Technical documentation for copy functionality
+│ ├── SPAM_ANALYSIS_INTEGRATION.md # Spam check integration
+│ ├── GMAIL_CLIPPING_PREVENTION.md # Gmail clipping prevention
 │ └── [other technical docs]
 └── images/ # UI screenshots for reference
 
@@ -317,14 +355,31 @@ next.config.js # Next.js configuration with environment variable exposure
 
 ### System Prompt Architecture
 
-The AI system uses an extremely comprehensive system prompt (200+ lines) that includes:
+The AI system uses an extremely comprehensive system prompt (300+ lines) optimized for **Utua Visual-First Email Design**:
 
-- Platform-specific formatting rules
-- Content strategy guidelines
-- UTM parameter generation rules
-- Image prompt generation specifications
-- Email body structure requirements
-- Bilingual content adaptation rules
+#### Design Philosophy:
+
+- **Minimal text**: 60-80 words maximum in email body
+- **Strong visual hierarchy**: Centered layouts, prominent CTAs
+- **Single prominent CTA button**: One main action per email
+- **Light, clean aesthetic**: White backgrounds, subtle borders
+
+#### System Prompt Components:
+
+- Platform-specific formatting rules (ConvertKit Markdown vs ActiveCampaign Natural Text)
+- Content strategy guidelines mimicking transactional emails
+- UTM parameter generation rules (market and platform-specific)
+- Image prompt generation specifications (Utua visual style)
+- Email body structure requirements (concise, visual-first)
+- Bilingual content adaptation rules (English for USA/UK, Spanish for Mexico)
+- Negative constraints from generation memory, database history, and IL dataset
+
+#### Enhanced Context Pipeline:
+
+1. **Local Visual Context**: Utua design principles and local examples
+2. **Generation Memory**: Recent broadcasts (last 10) for content diversity
+3. **Database History**: Recent broadcasts (last 5) from PostgreSQL for uniqueness
+4. **IL Dataset**: Negative examples to avoid repetition
 
 ## Content Generation Strategy
 
@@ -363,12 +418,33 @@ The system avoids generic "Apply Now" or "Get Loan" buttons in favor of action-o
 
 ### Form Handling Flow
 
-1. User selects platform, email type, market, and image type
-2. Optional URL reference and additional instructions
-3. Form validation using React Hook Form
-4. POST request to `/api/generate-broadcast`
-5. AI processing with structured JSON response
-6. Dynamic UI rendering with individual copy buttons
+1. User selects platform, email type, market, image type, and content length (Concise/Standard/Extended)
+2. Optional: Include handwritten signature, URL reference, and additional instructions
+3. Session management: Automatic session creation and broadcast history tracking
+4. Form validation using React Hook Form
+5. POST request to `/api/generate-broadcast`
+6. AI processing with:
+   - Local visual context (Utua design principles)
+   - Generation memory (recent broadcasts for diversity)
+   - Database history (recent broadcasts for uniqueness)
+   - IL dataset (negative constraints)
+7. Email preview with spam check integration (Postmark SpamAssassin)
+8. Dynamic UI rendering with individual copy buttons and spam score display
+9. Broadcast persistence in PostgreSQL database
+
+### New Form Fields
+
+- **contentLength**: "Concise" | "Standard" | "Extended" (default: "Concise")
+- **includeHandwrittenSignature**: boolean (default: false)
+  - Generates: signatureName, signatureTitle, signatureImagePrompt
+- **session_id**: string (auto-generated for session management)
+
+### New Response Fields
+
+- **signatureName**: First name for handwritten signature
+- **signatureTitle**: Professional title for signature
+- **signatureImagePrompt**: Prompt for generating signature image
+- **\_meta**: Session and broadcast tracking metadata
 
 ### Copy System Workflow
 
@@ -382,7 +458,7 @@ The system avoids generic "Apply Now" or "Get Loan" buttons in favor of action-o
 
 ### Core Dependencies
 
-- `@google-cloud/vertexai`: Google Cloud AI integration with service account support
+- `@google/genai` v1.30.0: Google Cloud Vertex AI integration with service account support (GoogleGenAI class)
 - `@radix-ui/react-*`: UI component foundation
 - `marked`: Markdown to HTML conversion for rich text copying
 - `react-hook-form`: Type-safe form management
@@ -390,6 +466,8 @@ The system avoids generic "Apply Now" or "Get Loan" buttons in favor of action-o
 - `tailwindcss`: Utility-first CSS framework
 - `class-variance-authority`: Component variant management
 - `tailwind-merge`: Conditional class merging
+- `pg`: PostgreSQL database client
+- `sharp`: Image optimization and processing
 
 ### Recent Major Updates
 
@@ -455,7 +533,7 @@ The application now uses a **hybrid authentication approach** with automatic fal
 
 ```typescript
 // In app/api/generate-broadcast/route.ts
-let vertex: VertexAI;
+let vertex: GoogleGenAI;
 
 if (
   process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
@@ -467,7 +545,8 @@ if (
     private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
   };
 
-  vertex = new VertexAI({
+  vertex = new GoogleGenAI({
+    vertexai: true,
     project: process.env.GOOGLE_CLOUD_PROJECT || "",
     location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
     googleAuthOptions: {
@@ -476,12 +555,23 @@ if (
   });
 } else {
   // Fall back to Application Default Credentials (ADC)
-  vertex = new VertexAI({
+  vertex = new GoogleGenAI({
+    vertexai: true,
     project: process.env.GOOGLE_CLOUD_PROJECT || "",
     location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
   });
 }
 ```
+
+} else {
+// Fall back to Application Default Credentials (ADC)
+vertex = new VertexAI({
+project: process.env.GOOGLE_CLOUD_PROJECT || "",
+location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
+});
+}
+
+````
 
 ## Form Configuration Details
 
@@ -506,7 +596,7 @@ if (
    # Verify service account permissions in Google Cloud Console
    # Check PM2 environment variables
    sudo -u www-data pm2 show emailgenius-broadcasts-generator
-   ```
+````
 
 2. **AI Generation Failures**:
 
@@ -572,7 +662,52 @@ sudo -u www-data pm2 monit
 
 ## Major Project Updates & Fixes
 
-### Authentication Migration (Completed - Latest)
+### AI SDK Migration (Breaking Change - Latest)
+
+- **Migrated from**: `@google-cloud/vertexai` (VertexAI class) → `@google/genai` v1.30.0 (GoogleGenAI class)
+- **Model Update**: Using "gemini-2.5-flash" (consistent naming)
+- **API Changes**: New initialization pattern with `vertexai: true` flag
+- **Method Changes**: `getGenerativeModel()` → `models.generateContent()`
+- **Impact**: All AI-related code updated to use new SDK
+
+### Database Integration & Context System (New)
+
+- **PostgreSQL Services**: Session, Broadcast, IL Dataset, API Request, Context, Template management
+- **Generation Memory System**: Tracks last 10 broadcasts for content diversity
+- **Local Visual Context**: Replaces GitHub MCP with local Utua design principles
+- **Removed**: Supermemory integration (database-only persistence)
+- **Enhanced Context**: Multi-source context pipeline (local examples + memory + database + IL dataset)
+
+### New API Routes & Features
+
+- **Spam Analysis**: Postmark SpamAssassin integration (`/api/spam-check/`)
+- **Gmail Clipping**: Prevention validation (`/api/gmail-clip-check/`)
+- **Email Rendering**: HTML rendering utilities (`/api/render-email/`)
+- **Session Management**: User session tracking (`/api/sessions/`)
+- **Broadcast CRUD**: Database operations (`/api/broadcasts/`)
+- **Visual Examples**: Template management (`/api/visual-examples/`)
+- **Image Uploads**: PNG to GitHub (`/api/upload-png-image/`)
+- **Winner Subjects**: Subject line uploads (`/api/upload-winner-subject/`)
+- **MCP Status**: Health check endpoint (`/api/mcp-status/`)
+
+### New Frontend Components
+
+- **EmailPreviewPanel**: Live preview with spam check integration
+- **SpamScoreDisplay**: Visual spam score indicator
+- **EmailContentMetrics**: Word/character count analytics
+- **TopAdsNavigation**: Navigation component
+- **FileUpload/PngUpload**: Enhanced upload components
+- **Header**: Application header with branding
+
+### Form Enhancements
+
+- **Content Length**: Concise/Standard/Extended options
+- **Handwritten Signatures**: Optional signature generation with image prompts
+- **Session Tracking**: Automatic session creation and history
+- **History Panel**: View past broadcasts within session
+- **Response Metadata**: Session ID and broadcast ID tracking
+
+### Authentication Migration (Completed - Previous)
 
 - **Migrated from**: File-based ADC → Service Account Credentials via Environment Variables
 - **Security Enhancement**: Eliminated dependency on service account JSON files
