@@ -127,14 +127,26 @@ export class VertexAIImageService {
           console.warn(`⚠️ Image Optimizer: ${optimizationResult.warning}`);
         }
 
+        // Validate JPEG format in the output
+        if (!optimizationResult.dataUrl.startsWith("data:image/jpeg")) {
+          console.error(
+            `❌ CRITICAL: Image format validation failed. Expected JPEG but got: ${optimizationResult.dataUrl.substring(0, 30)}`
+          );
+          throw new Error(
+            "Image format error: Expected JPEG format for ActiveCampaign compatibility"
+          );
+        }
+
+        console.log("✅ Format Validation: JPEG format confirmed");
         return optimizationResult.dataUrl;
       } else {
         console.error(
           `❌ Image Optimizer: Optimization failed - ${optimizationResult.error}`
         );
-        // Fall back to original image if optimization fails
-        console.log("📤 Returning original unoptimized image");
-        return rawDataUrl;
+        // DO NOT fall back to PNG - throw error instead for ActiveCampaign compatibility
+        throw new Error(
+          `Image optimization failed: ${optimizationResult.error}. JPEG format is required for ActiveCampaign.`
+        );
       }
     } catch (error) {
       console.error("Error generating image with Vertex AI:", error);

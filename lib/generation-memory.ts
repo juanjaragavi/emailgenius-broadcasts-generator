@@ -354,11 +354,14 @@ Based on the memory context above, you MUST:
 5. **BENEFIT FRAMING**: Highlight different benefits/angles than recent content
 ${
   uniqueFromNames.size > 0
-    ? `6. **SENDER NAME**: Use a different first name than: ${Array.from(uniqueFromNames).join(", ")}`
-    : ""
+    ? `6. 🚨 **SENDER NAME (CRITICAL)**: You MUST use a COMPLETELY DIFFERENT first name than these ${uniqueFromNames.size} already-used names: **${Array.from(uniqueFromNames).join(", ")}**
+   - Choose a name from a different gender, ethnicity, or cultural background
+   - ABSOLUTELY FORBIDDEN to repeat: ${Array.from(uniqueFromNames).join(", ")}
+   - Suggested alternatives: Sarah, Michael, Jessica, David, Rachel, Andrew, Lisa, James, Maria, Christopher`
+    : "6. **SENDER NAME**: Choose a diverse, culturally appropriate first name (varies by market)"
 }
 
-FAILURE TO CREATE DISTINCT CONTENT WILL RESULT IN REJECTION.
+🔴 **FAILURE TO CREATE DISTINCT CONTENT (ESPECIALLY SENDER NAME) WILL RESULT IN REJECTION.**
 `;
 
     return context;

@@ -6,6 +6,7 @@ import { BroadcastService } from "@/lib/database/services/broadcast.service";
 import { ApiRequestService } from "@/lib/database/services/api-request.service";
 import { ILBroadcastService } from "@/lib/database/services/il-broadcast.service";
 import { GenerationMemoryService } from "@/lib/generation-memory";
+import { QuotaManager } from "@/lib/quota-manager";
 
 // Initialize Vertex AI with service account credentials or ADC
 // This will try service account credentials first, then fall back to ADC
@@ -54,10 +55,16 @@ The Utua design language emphasizes:
 
 ## MANDATORY CONTENT CONSTRAINTS
 
-### Word Count Limits (NON-NEGOTIABLE):
-- **Concise mode**: 40-60 words max
-- **Standard mode**: 60-80 words max  
-- **Extended mode**: 80-100 words max
+### Word Count Limits (NON-NEGOTIABLE - STRICTLY ENFORCED):
+🚨 **THE USER WILL SPECIFY A CONTENT LENGTH MODE. YOU MUST MATCH THE EXACT WORD COUNT RANGE:**
+- **Concise mode**: 40-60 words ONLY (ULTRA-BRIEF, MINIMAL TEXT)
+- **Standard mode**: 60-80 words ONLY (BALANCED LENGTH)
+- **Extended mode**: 80-100 words ONLY (DETAILED, COMPREHENSIVE)
+
+🔴 **CRITICAL**: Each mode produces DISTINCTLY DIFFERENT content lengths.
+- Concise should feel noticeably shorter than Standard
+- Extended should feel noticeably longer than Standard
+- **Failure to match the specified word count will result in REJECTION**
 
 ### Structure Template (Follow Exactly):
 1. **Greeting** (1 line): "Hey [Name]," or "Hi [Name],"
@@ -93,43 +100,78 @@ The Utua design language emphasizes:
 - **HTML email body with inline styles** (not plain text!)
 - Single subject line (with or without emoji based on email type)
 - Preheader text under 140 characters
-- From Name: Personal first name only (e.g., "Emily", "Peter")
+- **From Name: Personal first name only (e.g., "Emily", "Peter", "Sarah", "Michael", "Jessica", "David", "Rachel", "Andrew")**
+  - 🚨 **CRITICAL**: ALWAYS use a DIFFERENT sender name than previously used names
+  - Generate DIVERSE names representing different genders, ethnicities, and cultural backgrounds
+  - **NEVER repeat the same name across consecutive generations**
+  - Mix common American/British/Mexican names appropriate to the market
 - From Email: topfinance@topfinanzas.com (US/UK) or info@topfinanzas.com (Mexico)
 
 ## ActiveCampaign HTML Structure Requirements
 
-**CRITICAL**: ActiveCampaign emails MUST use HTML with inline styles. Do NOT generate plain text.
+**CRITICAL**: ActiveCampaign emails MUST use HTML with inline styles and TABLE-BASED LAYOUTS for maximum email client compatibility.
 
-### HTML Email Body Template:
+### MANDATORY OUTPUT STRUCTURE:
+
+🚨 **OUTPUT BODY CONTENT ONLY** - NO \`<html>\`, \`<head>\`, or \`<body>\` tags
+🚨 **USE TABLE-BASED LAYOUT** - ActiveCampaign requires table structure, NOT divs
+
+### HTML Email Body Template (TABLE-BASED):
 \`\`\`html
-<div style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333;">
-  <p style="margin: 0 0 16px 0;">Hey %FIRSTNAME%,</p>
-  
-  <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: bold;">YOUR MESSAGE HERE 🎉</p>
-  
-  <ul style="margin: 0 0 20px 0; padding-left: 20px;">
-    <li style="margin-bottom: 8px;">✅ Benefit one</li>
-    <li style="margin-bottom: 8px;">✨ Benefit two</li>
-    <li style="margin-bottom: 8px;">✔ Benefit three</li>
-  </ul>
-  
-  <p style="margin: 0 0 20px 0;">CTA context text here:</p>
-  
-  <p style="margin: 0 0 16px 0;">Best,<br>Emily</p>
-</div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333;">
+  <tr>
+    <td style="padding: 20px;">
+      <p style="margin: 0 0 16px 0;">Hey %FIRSTNAME%,</p>
+
+      <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: bold; color: #000000;">YOUR MESSAGE HERE 🎉</p>
+
+      <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 20px 0;">
+        <tr><td style="padding: 4px 0; font-size: 16px;">✅ Benefit one with descriptive text</td></tr>
+        <tr><td style="padding: 4px 0; font-size: 16px;">✨ Benefit two with descriptive text</td></tr>
+        <tr><td style="padding: 4px 0; font-size: 16px;">✔ Benefit three with descriptive text</td></tr>
+      </table>
+
+      <p style="margin: 0 0 20px 0;">CTA context text here - explain what happens when they click.</p>
+
+      <p style="margin: 0 0 16px 0;">Best,<br>Emily</p>
+    </td>
+  </tr>
+</table>
 \`\`\`
 
-### HTML Inline Style Rules:
-- **All styles must be inline** - No external CSS or <style> tags
-- **Use <p> tags** with margin: 0 0 16px 0 for paragraphs
-- **Use <br> tags** for line breaks within paragraphs
-- **Use <ul> and <li>** for bullet lists with inline styles
-- **Use <strong> or <b>** for bold text, never **markdown**
-- **Keep it simple** - Avoid nested tables or complex structures
-- **Font family**: Arial, sans-serif
-- **Font size**: 16px (body), 18px (headlines)
-- **Line height**: 1.6
-- **Text color**: #333333 (dark gray)
+### CRITICAL HTML RULES FOR ACTIVECAMPAIGN:
+
+1. **BODY-ONLY OUTPUT**:
+   - ❌ NO \`<html>\`, \`<head>\`, \`<body>\`, \`<!DOCTYPE>\` tags
+   - ✅ START with \`<table>\` and END with \`</table>\`
+   - Content goes DIRECTLY into ActiveCampaign's Builder
+
+2. **TABLE-BASED LAYOUT** (NOT div-based):
+   - Primary container: \`<table width="100%" cellpadding="0" cellspacing="0" border="0">\`
+   - Content wrapper: \`<tr><td style="padding: 20px;">\`
+   - Bullet points: Use nested \`<table>\` with \`<tr><td>\` rows, NOT \`<ul><li>\`
+
+3. **TEXT/HTML RATIO OPTIMIZATION**:
+   - ActiveCampaign flags emails with poor text/image ratio
+   - INCREASE text content by making descriptions more verbose
+   - Each bullet should have 8-12 words (not 3-4 words)
+   - Add helpful explanatory text before/after bullets
+   - Example BAD bullet: "✅ Fast approval"
+   - Example GOOD bullet: "✅ Fast approval process - get your decision within minutes, not days"
+
+4. **INLINE STYLES ONLY**:
+   - Every element needs \`style="..."\` attribute
+   - NO external CSS or \`<style>\` blocks
+   - Font family: \`Arial, sans-serif\` or \`Arial, 'helvetica neue', helvetica, sans-serif\`
+   - Font size: 16px (body), 18-20px (headlines)
+   - Line height: 1.6
+   - Text color: #333333 or #000000
+
+5. **EMAIL CLIENT COMPATIBILITY**:
+   - Use \`cellpadding="0" cellspacing="0" border="0"\` on all tables
+   - Use \`margin: 0 0 16px 0\` for paragraph spacing
+   - Use \`<br>\` for line breaks within cells
+   - Use \`<p>\` tags for paragraphs, never bare text
 
 ## Image Generation Prompt
 
@@ -174,13 +216,13 @@ Examples:
   "imagePrompt": "Generate an... 16:9 aspect ratio."
 }
 
-### ActiveCampaign:
+### ActiveCampaign (TABLE-BASED HTML):
 {
   "subjectLine1": "Subject line under 50 chars",
   "previewText": "Preheader under 140 chars",
-  "fromName": "FirstName (e.g., Emily)",
+  "fromName": "FirstName (e.g., Emily, Peter, Sarah, Michael - MUST be unique)",
   "fromEmail": "topfinance@topfinanzas.com or info@topfinanzas.com",
-  "emailBody": "<div style=\"font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333;\"><p style=\"margin: 0 0 16px 0;\">Hey %FIRSTNAME%,</p><p style=\"margin: 0 0 16px 0; font-size: 18px; font-weight: bold;\">MESSAGE 🎉</p><ul style=\"margin: 0 0 20px 0; padding-left: 20px;\"><li style=\"margin-bottom: 8px;\">✅ Benefit</li></ul><p style=\"margin: 0 0 20px 0;\">CTA context</p><p style=\"margin: 0 0 16px 0;\">Best,<br>Emily</p></div>",
+  "emailBody": "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333;\"><tr><td style=\"padding: 20px;\"><p style=\"margin: 0 0 16px 0;\">Hey %FIRSTNAME%,</p><p style=\"margin: 0 0 16px 0; font-size: 18px; font-weight: bold; color: #000000;\">MESSAGE 🎉</p><p style=\"margin: 0 0 12px 0;\">Context text with explanation</p><table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"margin: 0 0 20px 0;\"><tr><td style=\"padding: 6px 0; font-size: 16px;\">✅ Detailed benefit with 8-12 words of explanation</td></tr></table><p style=\"margin: 0 0 20px 0;\">CTA context explaining what happens when they click</p><p style=\"margin: 0 0 16px 0;\">Best,<br>Emily</p></td></tr></table>",
   "ctaButtonText": "ACTION (2-3 words)",
   "destinationUrl": "Full URL with UTM params",
   "imagePrompt": "Generate an... 16:9 aspect ratio."
@@ -206,77 +248,94 @@ Best,
 Emily
 \`\`\`
 
-### Example 2 - ActiveCampaign (HTML):
+### Example 2 - ActiveCampaign (TABLE-BASED HTML):
 \`\`\`html
-<div style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333;">
-  <p style="margin: 0 0 16px 0;">Hey %FIRSTNAME%,</p>
-  
-  <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: bold;">Great news! 🎉 Your loan indication has moved forward.</p>
-  
-  <p style="margin: 0 0 16px 0;">You now have access to:</p>
-  
-  <ul style="margin: 0 0 20px 0; padding-left: 20px; list-style-type: none;">
-    <li style="margin-bottom: 8px;">✅ A flexible limit</li>
-    <li style="margin-bottom: 8px;">✨ Exclusive benefits just for you</li>
-  </ul>
-  
-  <p style="margin: 0 0 20px 0;">Review the details by clicking below:</p>
-  
-  <p style="margin: 0 0 16px 0;">Best,<br>Emily</p>
-</div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333;">
+  <tr>
+    <td style="padding: 20px;">
+      <p style="margin: 0 0 16px 0;">Hey %FIRSTNAME%,</p>
+
+      <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: bold; color: #000000;">Great news! 🎉 Your loan indication has moved forward.</p>
+
+      <p style="margin: 0 0 12px 0;">You now have access to exclusive financial tools designed for your needs:</p>
+
+      <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 20px 0;">
+        <tr><td style="padding: 6px 0; font-size: 16px;">✅ A flexible credit limit tailored to your financial profile</td></tr>
+        <tr><td style="padding: 6px 0; font-size: 16px;">✨ Exclusive benefits including cashback rewards and priority support</td></tr>
+      </table>
+
+      <p style="margin: 0 0 20px 0;">Review your complete offer details and available options by clicking the button below.</p>
+
+      <p style="margin: 0 0 16px 0;">Best,<br>Emily</p>
+    </td>
+  </tr>
+</table>
 \`\`\`
 
-### Example 3 - ActiveCampaign Card Ready (HTML):
+### Example 3 - ActiveCampaign Card Ready (TABLE-BASED HTML):
 \`\`\`html
-<div style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333;">
-  <p style="margin: 0 0 16px 0;">Hey %FIRSTNAME%,</p>
-  
-  <p style="margin: 0 0 12px 0; font-size: 20px; font-weight: bold;">YOUR CARD IS READY! 🎉</p>
-  <p style="margin: 0 0 16px 0; font-size: 14px; font-style: italic; color: #666666;">*Requires approval</p>
-  
-  <ul style="margin: 0 0 20px 0; padding-left: 20px; list-style-type: none;">
-    <li style="margin-bottom: 8px;">✔ No credit impact when applying</li>
-    <li style="margin-bottom: 8px;">✔ No annual or monthly fees</li>
-    <li style="margin-bottom: 8px;">✔ Flexible payment options</li>
-  </ul>
-  
-  <p style="margin: 0 0 16px 0;">Best,<br>Peter</p>
-</div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333;">
+  <tr>
+    <td style="padding: 20px;">
+      <p style="margin: 0 0 16px 0;">Hey %FIRSTNAME%,</p>
+
+      <p style="margin: 0 0 12px 0; font-size: 20px; font-weight: bold; color: #000000;">YOUR CARD IS READY! 🎉</p>
+      <p style="margin: 0 0 16px 0; font-size: 14px; font-style: italic; color: #666666;">*Subject to approval based on your application review</p>
+
+      <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 20px 0;">
+        <tr><td style="padding: 6px 0; font-size: 16px;">✔ No credit score impact when you submit your initial application</td></tr>
+        <tr><td style="padding: 6px 0; font-size: 16px;">✔ Zero annual fees, zero monthly maintenance charges</td></tr>
+        <tr><td style="padding: 6px 0; font-size: 16px;">✔ Flexible payment plans that adapt to your financial situation</td></tr>
+      </table>
+
+      <p style="margin: 0 0 16px 0;">Best,<br>Peter</p>
+    </td>
+  </tr>
+</table>
 \`\`\`
 
-### Example 4 - ActiveCampaign Spanish/Mexico (HTML):
+### Example 4 - ActiveCampaign Spanish/Mexico (TABLE-BASED HTML):
 \`\`\`html
-<div style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333;">
-  <p style="margin: 0 0 16px 0;">Hola %FIRSTNAME%,</p>
-  
-  <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: bold;">¡Buenas noticias! 🎉 Tu solicitud ha avanzado.</p>
-  
-  <p style="margin: 0 0 16px 0;">Ahora tienes acceso a:</p>
-  
-  <ul style="margin: 0 0 20px 0; padding-left: 20px; list-style-type: none;">
-    <li style="margin-bottom: 8px;">✅ Un límite flexible</li>
-    <li style="margin-bottom: 8px;">✨ Beneficios exclusivos para ti</li>
-  </ul>
-  
-  <p style="margin: 0 0 20px 0;">Revisa los detalles aquí:</p>
-  
-  <p style="margin: 0 0 16px 0;">Saludos,<br>María</p>
-</div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333;">
+  <tr>
+    <td style="padding: 20px;">
+      <p style="margin: 0 0 16px 0;">Hola %FIRSTNAME%,</p>
+
+      <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: bold; color: #000000;">¡Buenas noticias! 🎉 Tu solicitud ha avanzado exitosamente.</p>
+
+      <p style="margin: 0 0 12px 0;">Ahora tienes acceso a herramientas financieras diseñadas especialmente para ti:</p>
+
+      <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 20px 0;">
+        <tr><td style="padding: 6px 0; font-size: 16px;">✅ Un límite de crédito flexible adaptado a tu perfil financiero</td></tr>
+        <tr><td style="padding: 6px 0; font-size: 16px;">✨ Beneficios exclusivos incluyendo recompensas y atención prioritaria</td></tr>
+      </table>
+
+      <p style="margin: 0 0 20px 0;">Revisa todos los detalles de tu oferta haciendo clic en el botón de abajo.</p>
+
+      <p style="margin: 0 0 16px 0;">Saludos,<br>María</p>
+    </td>
+  </tr>
+</table>
 \`\`\`
 
 ## ABSOLUTE PROHIBITIONS
 
-❌ More than 100 words in email body
+❌ More than 100 words in email body (respect content length mode)
 ❌ More than 3 bullet points
 ❌ Multiple CTA buttons
 ❌ "Apply Now", "Get Loan", "Click Here" CTAs
 ❌ Department signatures (e.g., "The Card Issuance Team")
 ❌ Long paragraphs (more than 2 sentences each)
 ❌ Excessive bold text (max 2 bold phrases)
-❌ **Plain text for ActiveCampaign** (must use HTML!)
+❌ **Plain text for ActiveCampaign** (must use TABLE-BASED HTML!)
+❌ **DIV-based layouts for ActiveCampaign** (must use TABLES!)
+❌ **Including \`<html>\`, \`<head>\`, \`<body>\` tags** (BODY-ONLY OUTPUT!)
+❌ **Using \`<ul><li>\` for bullets in ActiveCampaign** (use nested tables!)
+❌ **Short bullets with 3-4 words** (need 8-12 words for good text/HTML ratio!)
 ❌ Corporate/formal language
 ❌ Placeholder URLs (example.com)
-❌ Detailed feature explanations
+❌ Detailed feature explanations beyond bullet descriptions
+❌ Repeating sender names from Generation Memory context
 
 ## GMAIL CLIPPING PREVENTION
 
@@ -332,6 +391,25 @@ export async function POST(request: NextRequest) {
   let sessionId = "";
 
   try {
+    // Check Gemini API quota before processing
+    const geminiQuota = QuotaManager.canMakeGeminiRequest();
+    if (!geminiQuota.allowed) {
+      console.error(`🚫 Quota: ${geminiQuota.reason}`);
+      return NextResponse.json(
+        {
+          error: "API quota exceeded",
+          details: geminiQuota.reason,
+          quota: {
+            used: geminiQuota.usage,
+            limit: geminiQuota.limit,
+            remaining: geminiQuota.remaining,
+            resetAt: geminiQuota.resetAt,
+          },
+        },
+        { status: 429 }
+      );
+    }
+
     const formData: FormData = await request.json();
     sessionId =
       formData.session_id ||
@@ -516,43 +594,71 @@ ${ilBroadcasts
       );
     }
 
-    // Determine content length instruction
+    // Determine content length instruction with STRONG enforcement
     let lengthInstruction = "";
+    let wordCountEnforcement = "";
+
     switch (formData.contentLength) {
       case "Concise":
         lengthInstruction =
-          "Content Length: Concise (Breve) - Keep the email body very short, direct, and to the point. Use minimal text to convey the message. Max 150 words.";
+          "**MANDATORY CONTENT LENGTH: CONCISE (Breve)**\n\n" +
+          "YOU MUST generate VERY SHORT, ULTRA-BRIEF content.\n" +
+          "WORD COUNT CONSTRAINT: **40-60 words maximum** in email body.\n" +
+          "STRUCTURE: 1 short greeting + 1-2 sentence hook + 2-3 ultra-brief bullets + 1 CTA lead-in.\n" +
+          "NO ELABORATION. NO EXTRA DETAILS. ABSOLUTE MINIMUM TEXT.\n" +
+          "If you generate more than 60 words, the output will be REJECTED.";
+        wordCountEnforcement = "CONCISE MODE: 40-60 WORDS MAXIMUM";
         break;
       case "Extended":
         lengthInstruction =
-          "Content Length: Extended (Detallado) - Provide more detailed information and context. You can use more paragraphs and bullet points to explain the offer or update thoroughly. Max 300 words.";
+          "**MANDATORY CONTENT LENGTH: EXTENDED (Detallado)**\n\n" +
+          "YOU MUST generate DETAILED, COMPREHENSIVE content with explanations.\n" +
+          "WORD COUNT CONSTRAINT: **80-100 words in email body**.\n" +
+          "STRUCTURE: Full greeting + 2-3 sentence hook with context + 3-4 detailed bullets with explanations + 2 sentence CTA lead-in.\n" +
+          "PROVIDE THOROUGH INFORMATION. INCLUDE CONTEXT AND BENEFITS.\n" +
+          "You MUST use 80-100 words to fully explain the offer.";
+        wordCountEnforcement = "EXTENDED MODE: 80-100 WORDS REQUIRED";
         break;
       case "Standard":
       default:
         lengthInstruction =
-          "Content Length: Standard - Balance brevity with sufficient detail. Max 200 words.";
+          "**MANDATORY CONTENT LENGTH: STANDARD**\n\n" +
+          "YOU MUST generate BALANCED content - not too brief, not too long.\n" +
+          "WORD COUNT CONSTRAINT: **60-80 words in email body**.\n" +
+          "STRUCTURE: Greeting + 2 sentence hook + 3 moderate bullets + 1 CTA lead-in.\n" +
+          "BALANCE brevity with sufficient detail. NEITHER sparse NOR verbose.\n" +
+          "Stay within the 60-80 word range strictly.";
+        wordCountEnforcement = "STANDARD MODE: 60-80 WORDS";
         break;
     }
 
-    // Create user prompt from form data
+    // Create user prompt from form data with PROMINENT length enforcement
     const userPrompt = `
+=== GENERATION PARAMETERS ===
+
 Platform: ${formData.platform}
 Email Type: ${formData.emailType}
 Market: ${formData.market}
 Image Type: ${formData.imageType}
+
+=== CRITICAL CONTENT LENGTH CONSTRAINT ===
 ${lengthInstruction}
-${formData.url ? `URL: ${formData.url}` : ""}
+
+${wordCountEnforcement ? `\n🚨 WORD COUNT ENFORCEMENT: ${wordCountEnforcement}\n` : ""}
+
+${formData.url ? `URL Reference: ${formData.url}` : ""}
 ${
   formData.additionalInstructions
     ? `Additional Instructions: ${formData.additionalInstructions}`
     : ""
-}   : ""
 }
 ${
   formData.includeHandwrittenSignature
     ? `Include Handwritten Signature: Yes - Include a personalized closing text with professional valediction, sender's name, and title. Also provide signature generation details.`
     : ""
 }
+
+IMPORTANT: The content length specification above is MANDATORY and MUST be followed exactly. Word count compliance is non-negotiable.
 
 Generate an email broadcast based on these specifications.`;
 
@@ -583,6 +689,9 @@ Generate an email broadcast based on these specifications.`;
         },
       ],
     });
+
+    // Record successful Gemini API usage
+    QuotaManager.recordGeminiRequest();
 
     // Extract the text from the response
     const text = result.text || "";

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { VertexAIImageService } from "@/lib/vertexai-imagen";
+import { QuotaManager } from "@/lib/quota-manager";
 
 // Initialize Vertex AI Image service
 let vertexAIImageService: VertexAIImageService | null = null;
@@ -19,6 +20,33 @@ function getImageService(): VertexAIImageService {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check Imagen API quota before processing
+    const imagenQuota = QuotaManager.canMakeImagenRequest();
+    if (!imagenQuota.allowed) {
+      console.error(`🚫 Quota: ${imagenQuota.reason}`);
+      return NextResponse.json(
+        {
+          error: "API quota exceeded. Please try again later.",
+          details: imagenQuota.reason,
+          quota: {
+            daily: {
+              used: imagenQuota.dailyUsage,
+              limit: imagenQuota.dailyLimit,
+              remaining: imagenQuota.dailyRemaining,
+              resetAt: imagenQuota.dailyResetAt,
+            },
+            monthly: {
+              used: imagenQuota.monthlyUsage,
+              limit: imagenQuota.monthlyLimit,
+              remaining: imagenQuota.monthlyRemaining,
+              resetAt: imagenQuota.monthlyResetAt,
+            },
+          },
+        },
+        { status: 429 }
+      );
+    }
+
     const { imagePrompt } = await request.json();
 
     if (!imagePrompt) {
@@ -49,9 +77,27 @@ export async function POST(request: NextRequest) {
     // Generate the image
     const imageDataUrl = await imageService.generateImage(formattedPrompt);
 
+    // Record successful Imagen API usage
+    QuotaManager.recordImagenRequest();
+
+    // Get updated quota status
+    const updatedQuota = QuotaManager.canMakeImagenRequest();
+
     return NextResponse.json({
       imageUrl: imageDataUrl,
       success: true,
+      quota: {
+        daily: {
+          used: updatedQuota.dailyUsage,
+          remaining: updatedQuota.dailyRemaining,
+          limit: updatedQuota.dailyLimit,
+        },
+        monthly: {
+          used: updatedQuota.monthlyUsage,
+          remaining: updatedQuota.monthlyRemaining,
+          limit: updatedQuota.monthlyLimit,
+        },
+      },
     });
   } catch (error) {
     console.error("Error in image generation API:", error);
